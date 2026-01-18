@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -7,12 +8,19 @@ const Footer = () => {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           <div>
-            <div className="text-2xl font-bold text-blue-700 tracking-tighter">
-              Saticim
-            </div>
-            <p className="mt-4 text-sm leading-6 text-gray-600 max-w-xs">
+            <Link to="/" className="flex items-center gap-2 group">
+              <img
+                src="https://ecbhhbyfocitafbfsegg.supabase.co/storage/v1/object/public/logos/saticimlogokucuk.png"
+                alt="Satıcım"
+                className="h-20 w-auto object-contain hover:opacity-90 transition-opacity"
+              />
+            </Link>
+
+            <p className="text-sm leading-6 text-gray-600 max-w-xs">
               E-ticaretin geleceği burada başlıyor.
             </p>
+
+
           </div>
           <div className="col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-8">
             <div>

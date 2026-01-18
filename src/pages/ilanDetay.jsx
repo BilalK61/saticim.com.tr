@@ -30,6 +30,71 @@ const IlanDetay = () => {
     const [activeImage, setActiveImage] = useState(0);
     const [showPhone, setShowPhone] = useState(false);
     const [showSikayet, setShowSikayet] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [favoriteLoading, setFavoriteLoading] = useState(false);
+
+    // Check if listing is favorited
+    useEffect(() => {
+        const checkFavorite = async () => {
+            if (!user || !id) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('favorites')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .eq('listing_id', id)
+                    .maybeSingle();
+
+                if (!error && data) {
+                    setIsFavorite(true);
+                }
+            } catch (err) {
+                console.warn('Favori kontrolü yapılamadı:', err);
+            }
+        };
+
+        checkFavorite();
+    }, [user, id]);
+
+    // Toggle favorite function
+    const toggleFavorite = async () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
+        setFavoriteLoading(true);
+        try {
+            if (isFavorite) {
+                // Remove from favorites
+                const { error } = await supabase
+                    .from('favorites')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('listing_id', id);
+
+                if (error) throw error;
+                setIsFavorite(false);
+            } else {
+                // Add to favorites
+                const { error } = await supabase
+                    .from('favorites')
+                    .insert({
+                        user_id: user.id,
+                        listing_id: id
+                    });
+
+                if (error) throw error;
+                setIsFavorite(true);
+            }
+        } catch (err) {
+            console.error('Favori işlemi başarısız:', err);
+            alert('Favori işlemi yapılamadı. Lütfen tekrar deneyin.');
+        } finally {
+            setFavoriteLoading(false);
+        }
+    };
 
     // Mock Data for fallback (BMW Listing as default placeholder for legacy IDs)
     const mockListing = {
@@ -491,9 +556,16 @@ const IlanDetay = () => {
                                     title={listing.title}
                                     className="!py-2 !px-3 text-sm"
                                 />
-                                <button className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 transition">
-                                    <Heart size={16} />
-                                    Favorilere Ekle
+                                <button
+                                    onClick={toggleFavorite}
+                                    disabled={favoriteLoading}
+                                    className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition ${isFavorite
+                                        ? 'bg-red-500 text-white hover:bg-red-600'
+                                        : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                        } ${favoriteLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+                                    {favoriteLoading ? 'Yükleniyor...' : (isFavorite ? 'Favorilerde' : 'Favorilere Ekle')}
                                 </button>
                             </div>
 

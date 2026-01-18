@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Modal from '../components/Modal';
 import {
@@ -22,9 +22,13 @@ import {
 const ProfilPage = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('listings');
+    const [searchParams] = useSearchParams();
+    const initialTab = searchParams.get('tab') || 'listings';
+    const [activeTab, setActiveTab] = useState(initialTab);
     const [listings, setListings] = useState([]);
+    const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [favoritesLoading, setFavoritesLoading] = useState(true);
     const [profileStats, setProfileStats] = useState({
         totalListings: 0,
         totalViews: 0,
@@ -74,6 +78,7 @@ const ProfilPage = () => {
                 avatar_url: user.avatar_url || ''
             });
             fetchUserListings();
+            fetchUserFavorites();
         }
     }, [user]);
 
@@ -92,6 +97,58 @@ const ProfilPage = () => {
             console.error('İlanlar yüklenirken hata:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchUserFavorites = async () => {
+        try {
+            setFavoritesLoading(true);
+            // Önce favorileri çek
+            const { data: favoritesData, error: favoritesError } = await supabase
+                .from('favorites')
+                .select('listing_id, created_at')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (favoritesError) throw favoritesError;
+
+            if (favoritesData && favoritesData.length > 0) {
+                // Favori ilanların detaylarını çek
+                const listingIds = favoritesData.map(f => f.listing_id);
+                const { data: listingsData, error: listingsError } = await supabase
+                    .from('listings')
+                    .select('*')
+                    .in('id', listingIds)
+                    .eq('status', 'approved');
+
+                if (listingsError) throw listingsError;
+                setFavorites(listingsData || []);
+                setProfileStats(prev => ({ ...prev, favorites: listingsData?.length || 0 }));
+            } else {
+                setFavorites([]);
+                setProfileStats(prev => ({ ...prev, favorites: 0 }));
+            }
+        } catch (error) {
+            console.error('Favoriler yüklenirken hata:', error);
+        } finally {
+            setFavoritesLoading(false);
+        }
+    };
+
+    const handleRemoveFavorite = async (listingId) => {
+        try {
+            const { error } = await supabase
+                .from('favorites')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('listing_id', listingId);
+
+            if (error) throw error;
+            setFavorites(favorites.filter(f => f.id !== listingId));
+            setProfileStats(prev => ({ ...prev, favorites: prev.favorites - 1 }));
+        } catch (error) {
+            console.error('Favori silinirken hata:', error);
+            showModal('Hata', 'Favori silinirken bir hata oluştu.', 'error');
         }
     };
 
@@ -362,12 +419,57 @@ const ProfilPage = () => {
 
                         {/* Favorites Tab */}
                         {activeTab === 'favorites' && (
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                                <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mx-auto mb-4 text-pink-500">
-                                    <Heart size={32} />
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-bold text-gray-800">Favorilerim</h2>
                                 </div>
-                                <h3 className="text-lg font-medium text-gray-900">Favoriler</h3>
-                                <p className="text-gray-500">Favori ilanlarınızı burada görebilirsiniz.</p>
+
+                                {favoritesLoading ? (
+                                    <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div></div>
+                                ) : favorites.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {favorites.map(listing => (
+                                            <div key={listing.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4 group">
+                                                <div className="w-32 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
+                                                    <img
+                                                        src={listing.images?.[0] || 'https://placehold.co/150'}
+                                                        alt={listing.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-900 truncate">{listing.title}</h3>
+                                                        <p className="text-blue-600 font-bold">{listing.price} {listing.currency}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <button
+                                                            onClick={() => handleRemoveFavorite(listing.id)}
+                                                            className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 transition flex items-center gap-1"
+                                                        >
+                                                            <Heart size={12} fill="currentColor" /> Kaldır
+                                                        </button>
+                                                        <button
+                                                            onClick={() => navigate(`/ilan-detay/${listing.id}`)}
+                                                            className="ml-auto text-xs text-blue-600 hover:underline"
+                                                        >
+                                                            Görüntüle
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
+                                        <div className="w-16 h-16 bg-pink-50 rounded-full flex items-center justify-center mx-auto mb-4 text-pink-500">
+                                            <Heart size={32} />
+                                        </div>
+                                        <h3 className="text-lg font-medium text-gray-900">Henüz favorin yok</h3>
+                                        <p className="text-gray-500 mb-6">Beğendiğin ilanları favorilere ekle.</p>
+                                        <button onClick={() => navigate('/')} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">İlanları Keşfet</button>
+                                    </div>
+                                )}
                             </div>
                         )}
 

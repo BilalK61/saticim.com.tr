@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Send, Loader2, Bot, Plus, MessageSquare, Trash2 } from 'lucide-react';
+import { Send, Loader2, Bot, Plus, MessageSquare, Trash2, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import bilaiLogo from '../assets/logokucuk.png';
+const bilaiLogo = "https://ecbhhbyfocitafbfsegg.supabase.co/storage/v1/object/public/logos/logokucuk.png";
 
 // --- MOCK VERİTABANI VE FONKSİYONLAR ---
 const MOCK_ILANLAR = [
@@ -46,6 +47,7 @@ const toolsConfig = [
 
 const AiAssistantPage = () => {
     const { user } = useAuth();
+    const [showIntro, setShowIntro] = useState(true);
     const [conversations, setConversations] = useState([]);
     const [activeConversationId, setActiveConversationId] = useState(null);
     const [messages, setMessages] = useState([
@@ -55,6 +57,14 @@ const AiAssistantPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [chatHistory, setChatHistory] = useState([]);
     const messagesEndRef = useRef(null);
+
+    // Intro animasyonunu 2.5 saniye sonra kapat
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowIntro(false);
+        }, 2500);
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -236,114 +246,212 @@ const AiAssistantPage = () => {
     };
 
     return (
-        <div style={{ height: 'calc(100vh - 120px)' }} className="bg-white flex overflow-hidden">
-            {/* Sol Panel - Bilgi (Sabit, scroll yok) */}
-            <div className="hidden lg:flex lg:w-1/5 flex-col p-5 bg-gray-50 border-r border-gray-200" style={{ height: '100%', overflow: 'hidden' }}>
-                <div className="flex items-center gap-3 mb-4">
-                    <img src={bilaiLogo} alt="bilAI" className="h-12" />
-                    <p className="text-gray-600 text-sm">Yapay Zeka Asistanı</p>
-                </div>
-                <p className="text-gray-700 text-sm mb-6">Aradığınız ilanı saniyeler içinde bulun.</p>
+        <>
+            {/* Intro Animasyonu */}
+            <AnimatePresence>
+                {showIntro && (
+                    <motion.div
+                        initial={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="fixed inset-0 z-[100] bg-gradient-to-br from-white via-gray-50 to-gray-100 flex items-center justify-center"
+                    >
+                        <div className="text-center">
+                            {/* Logo Animation */}
+                            <motion.div
+                                initial={{ scale: 0, rotate: -180 }}
+                                animate={{ scale: 1, rotate: 0 }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 200,
+                                    damping: 15,
+                                    duration: 0.8
+                                }}
+                                className="relative mb-6"
+                            >
+                                {/* Glow Effect */}
+                                <motion.div
+                                    animate={{
+                                        scale: [1, 1.2, 1],
+                                        opacity: [0.5, 0.8, 0.5]
+                                    }}
+                                    transition={{
+                                        repeat: Infinity,
+                                        duration: 2,
+                                        ease: "easeInOut"
+                                    }}
+                                    className="absolute inset-0 bg-blue-400/30 rounded-full blur-3xl"
+                                    style={{ width: '200px', height: '200px', margin: 'auto', left: 0, right: 0, top: 0, bottom: 0 }}
+                                />
+                                <img
+                                    src={bilaiLogo}
+                                    alt="bilAI"
+                                    className="w-36 h-16 object-contain relative z-10 drop-shadow-xl mx-auto"
+                                />
+                            </motion.div>
 
-                <div className="space-y-2 mb-5">
-                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 text-sm">
-                        <span className="text-lg">⚡</span><span className="text-gray-700">Hızlı Arama</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 text-sm">
-                        <span className="text-lg">🎯</span><span className="text-gray-700">Akıllı Filtreleme</span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 text-sm">
-                        <span className="text-lg">💬</span><span className="text-gray-700">Kolay Kullanım</span>
-                    </div>
-                </div>
+                            {/* Text Animation */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5, duration: 0.5 }}
+                            >
+                                <p className="text-gray-500 text-lg ">Yapay Zeka Asistanınız</p>
+                            </motion.div>
 
-                <div className="mt-auto">
-                    <p className="text-sm text-gray-500 mb-2">Örnek Sorular:</p>
-                    {["Araba ara", "Telefon bul", "Emlak ilan"].map((text, idx) => (
-                        <button key={idx} onClick={() => setInput(text)} className="w-full text-left px-3 py-2 mb-2 bg-white hover:bg-gray-100 rounded-lg text-gray-700 text-sm border border-gray-200">
-                            {text}
-                        </button>
-                    ))}
-                </div>
-            </div>
+                            {/* Sparkles */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.8 }}
+                                className="flex justify-center gap-2 mt-6"
+                            >
+                                {[0, 1, 2].map((i) => (
+                                    <motion.div
+                                        key={i}
+                                        animate={{
+                                            y: [0, -10, 0],
+                                            opacity: [0.5, 1, 0.5]
+                                        }}
+                                        transition={{
+                                            repeat: Infinity,
+                                            duration: 1,
+                                            delay: i * 0.2,
+                                            ease: "easeInOut"
+                                        }}
+                                    >
+                                        <Sparkles className="w-5 h-5 text-blue-500" />
+                                    </motion.div>
+                                ))}
+                            </motion.div>
 
-            {/* Orta Panel - Chat */}
-            <div className="flex-1 flex flex-col" style={{ height: '100%', minHeight: 0 }}>
-                {/* Header */}
-                <div className="px-5 py-3 bg-[#0015cf] flex items-center justify-between" style={{ flexShrink: 0 }}>
-                    <div className="flex items-center gap-3">
-                        <Bot size={24} className="text-white" />
-                        <h2 className="font-semibold text-white text-lg">bilAI</h2>
-                    </div>
-                    <button onClick={startNewConversation} className="lg:hidden p-2 bg-white/20 rounded-lg text-white">
-                        <Plus size={20} />
-                    </button>
-                </div>
-
-                {/* Mesajlar - SADECE BURASI SCROLL */}
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50" style={{ minHeight: 0 }}>
-                    {messages.map((msg, idx) => (
-                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            <div className={`max-w-[80%] rounded-xl px-4 py-3 ${msg.role === 'user' ? 'bg-[#0015cf] text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
-                                {msg.text.split('\n').map((line, i) => (<p key={i} className="text-sm leading-relaxed">{line || '\u00A0'}</p>))}
-                            </div>
+                            <motion.div
+                                className="h-1.5 bg-gray-200 rounded-full mt-8 mx-auto max-w-[200px] overflow-hidden"
+                            >
+                                <motion.div
+                                    initial={{ width: '0%' }}
+                                    animate={{ width: '100%' }}
+                                    transition={{
+                                        duration: 2,
+                                        ease: "easeInOut"
+                                    }}
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
+                                />
+                            </motion.div>
                         </div>
-                    ))}
-                    {isLoading && (
-                        <div className="flex justify-start">
-                            <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
-                                <Loader2 size={18} className="animate-spin text-[#0015cf]" />
-                            </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            <div style={{ height: 'calc(100vh - 120px)' }} className="bg-white flex overflow-hidden">
+                {/* Sol Panel - Bilgi (Sabit, scroll yok) */}
+                <div className="hidden lg:flex lg:w-1/5 flex-col p-5 bg-gray-50 border-r border-gray-200" style={{ height: '100%', overflow: 'hidden' }}>
+                    <div className="flex items-center gap-3 mb-4">
+                        <img src={bilaiLogo} alt="bilAI" className="h-12" />
+                        <p className="text-gray-600 text-sm">Yapay Zeka Asistanı</p>
+                    </div>
+                    <p className="text-gray-700 text-sm mb-6">Aradığınız ilanı saniyeler içinde bulun.</p>
+
+                    <div className="space-y-2 mb-5">
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 text-sm">
+                            <span className="text-lg">⚡</span><span className="text-gray-700">Hızlı Arama</span>
                         </div>
-                    )}
-                    <div ref={messagesEndRef} />
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 text-sm">
+                            <span className="text-lg">🎯</span><span className="text-gray-700">Akıllı Filtreleme</span>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 text-sm">
+                            <span className="text-lg">💬</span><span className="text-gray-700">Kolay Kullanım</span>
+                        </div>
+                    </div>
+
+                    <div className="mt-auto">
+                        <p className="text-sm text-gray-500 mb-2">Örnek Sorular:</p>
+                        {["Araba ara", "Telefon bul", "Emlak ilan"].map((text, idx) => (
+                            <button key={idx} onClick={() => setInput(text)} className="w-full text-left px-3 py-2 mb-2 bg-white hover:bg-gray-100 rounded-lg text-gray-700 text-sm border border-gray-200">
+                                {text}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                {/* Input */}
-                <div className="px-5 py-3 bg-white border-t border-gray-200" style={{ flexShrink: 0 }}>
-                    <div className="flex gap-3">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                            placeholder="Mesaj yazın..."
-                            className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#0015cf] text-base"
-                        />
-                        <button onClick={handleSend} disabled={!input.trim() || isLoading} className="px-5 py-3 bg-[#0015cf] text-white rounded-xl hover:bg-[#0010a0] disabled:opacity-50">
-                            {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+                {/* Orta Panel - Chat */}
+                <div className="flex-1 flex flex-col" style={{ height: '100%', minHeight: 0 }}>
+                    {/* Header */}
+                    <div className="px-5 py-3 bg-[#0015cf] flex items-center justify-between" style={{ flexShrink: 0 }}>
+                        <div className="flex items-center gap-3">
+                            <Bot size={24} className="text-white" />
+                            <h2 className="font-semibold text-white text-lg">bilAI</h2>
+                        </div>
+                        <button onClick={startNewConversation} className="lg:hidden p-2 bg-white/20 rounded-lg text-white">
+                            <Plus size={20} />
+                        </button>
+                    </div>
+
+                    {/* Mesajlar - SADECE BURASI SCROLL */}
+                    <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50" style={{ minHeight: 0 }}>
+                        {messages.map((msg, idx) => (
+                            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[80%] rounded-xl px-4 py-3 ${msg.role === 'user' ? 'bg-[#0015cf] text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                                    {msg.text.split('\n').map((line, i) => (<p key={i} className="text-sm leading-relaxed">{line || '\u00A0'}</p>))}
+                                </div>
+                            </div>
+                        ))}
+                        {isLoading && (
+                            <div className="flex justify-start">
+                                <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                                    <Loader2 size={18} className="animate-spin text-[#0015cf]" />
+                                </div>
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input */}
+                    <div className="px-5 py-3 bg-white border-t border-gray-200" style={{ flexShrink: 0 }}>
+                        <div className="flex gap-3">
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                placeholder="Mesaj yazın..."
+                                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#0015cf] text-base"
+                            />
+                            <button onClick={handleSend} disabled={!input.trim() || isLoading} className="px-5 py-3 bg-[#0015cf] text-white rounded-xl hover:bg-[#0010a0] disabled:opacity-50">
+                                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Sağ Panel - Geçmiş (Sabit, scroll yok) */}
+                <div className="hidden lg:flex lg:w-1/5 flex-col bg-gray-100 border-l border-gray-200" style={{ height: '100%', overflow: 'hidden' }}>
+                    <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                        {!user ? (
+                            <p className="text-gray-400 text-sm text-center py-6">Sohbet geçmişi için giriş yapın</p>
+                        ) : conversations.length === 0 ? (
+                            <p className="text-gray-400 text-sm text-center py-6">Henüz sohbet yok</p>
+                        ) : (
+                            conversations.map(conv => (
+                                <div key={conv.id} onClick={() => loadConversation(conv)} className={`group flex items-center gap-2 p-3 rounded-lg cursor-pointer text-sm ${activeConversationId === conv.id ? 'bg-[#0015cf] text-white' : 'hover:bg-gray-200 text-gray-700'}`}>
+                                    <MessageSquare size={16} className="shrink-0" />
+                                    <p className="flex-1 truncate">{conv.title}</p>
+                                    <button onClick={(e) => deleteConversation(conv.id, e)} className="opacity-0 group-hover:opacity-100 p-1">
+                                        <Trash2 size={14} className={activeConversationId === conv.id ? 'text-white' : 'text-red-400'} />
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    <div className="px-3 py-5" style={{ flexShrink: 0 }}>
+                        <button onClick={startNewConversation} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0015cf] text-white rounded-lg text-sm font-medium hover:bg-[#0010a0]">
+                            <Plus size={18} />
+                            <span>Yeni Sohbet</span>
                         </button>
                     </div>
                 </div>
             </div>
-
-            {/* Sağ Panel - Geçmiş (Sabit, scroll yok) */}
-            <div className="hidden lg:flex lg:w-1/5 flex-col bg-gray-100 border-l border-gray-200" style={{ height: '100%', overflow: 'hidden' }}>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                    {!user ? (
-                        <p className="text-gray-400 text-sm text-center py-6">Sohbet geçmişi için giriş yapın</p>
-                    ) : conversations.length === 0 ? (
-                        <p className="text-gray-400 text-sm text-center py-6">Henüz sohbet yok</p>
-                    ) : (
-                        conversations.map(conv => (
-                            <div key={conv.id} onClick={() => loadConversation(conv)} className={`group flex items-center gap-2 p-3 rounded-lg cursor-pointer text-sm ${activeConversationId === conv.id ? 'bg-[#0015cf] text-white' : 'hover:bg-gray-200 text-gray-700'}`}>
-                                <MessageSquare size={16} className="shrink-0" />
-                                <p className="flex-1 truncate">{conv.title}</p>
-                                <button onClick={(e) => deleteConversation(conv.id, e)} className="opacity-0 group-hover:opacity-100 p-1">
-                                    <Trash2 size={14} className={activeConversationId === conv.id ? 'text-white' : 'text-red-400'} />
-                                </button>
-                            </div>
-                        ))
-                    )}
-                </div>
-                <div className="px-3 py-5" style={{ flexShrink: 0 }}>
-                    <button onClick={startNewConversation} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0015cf] text-white rounded-lg text-sm font-medium hover:bg-[#0010a0]">
-                        <Plus size={18} />
-                        <span>Yeni Sohbet</span>
-                    </button>
-                </div>
-            </div>
-        </div>
+        </>
     );
 };
 
