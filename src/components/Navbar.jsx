@@ -273,6 +273,17 @@ const Navbar = () => {
               </AnimatePresence>
             </div>
 
+            {/* Mobile Login Button (Visible for guests) */}
+            {!user && (
+              <button
+                onClick={() => navigate('/login')}
+                className="md:hidden flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                <UserCircle className="w-4 h-4" />
+                <span>Giriş Yap</span>
+              </button>
+            )}
+
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
