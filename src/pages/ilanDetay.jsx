@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import IlanSikayet from '../components/ilansikayet';
 import ShareButton from '../components/ShareButton';
+import LoginModal from '../components/LoginModal';
 import { useAuth } from '../context/AuthContext';
 
 const IlanDetay = () => {
@@ -30,6 +31,7 @@ const IlanDetay = () => {
     const [activeImage, setActiveImage] = useState(0);
     const [showPhone, setShowPhone] = useState(false);
     const [showSikayet, setShowSikayet] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
     const [favoriteLoading, setFavoriteLoading] = useState(false);
 
@@ -609,9 +611,15 @@ const IlanDetay = () => {
                                     <Phone size={20} />
                                     {showPhone ? listing.seller.phones[0] : "Numarayı Göster"}
                                 </button>
-                                {user && user.id !== listing.user_id && (
+                                {(!user || user.id !== listing.user_id) && (
                                     <button
-                                        onClick={() => navigate(`/mesajlar?recipientId=${listing.user_id}&listingId=${listing.id}&listingTitle=${encodeURIComponent(listing.title)}`)}
+                                        onClick={() => {
+                                            if (!user) {
+                                                setShowLoginModal(true);
+                                            } else {
+                                                navigate(`/mesajlar?recipientId=${listing.user_id}&listingId=${listing.id}&listingTitle=${encodeURIComponent(listing.title)}`);
+                                            }
+                                        }}
                                         className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 border-2 border-gray-200 py-3 rounded-xl font-bold hover:border-gray-300 hover:bg-gray-50 transition">
                                         <MessageCircle size={20} />
                                         Mesaj Gönder
@@ -654,6 +662,11 @@ const IlanDetay = () => {
                 onClose={() => setShowSikayet(false)}
                 listingId={listing.id}
                 listingTitle={listing.title}
+            />
+
+            <LoginModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
             />
         </div>
     );

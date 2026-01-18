@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useSearchSuggestions } from '../hooks/useSearchSuggestions';
 import SearchDropdown from './SearchDropdown';
+import LoginModal from './LoginModal';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const { suggestions, loading } = useSearchSuggestions(searchQuery);
 
   // Timer ID'lerini tutmak için ref'ler
@@ -129,7 +131,13 @@ const Navbar = () => {
 
             {/* İlan Ver Button */}
             <button
-              onClick={() => navigate('/ilan-ekle')}
+              onClick={() => {
+                if (!user) {
+                  setShowLoginModal(true);
+                } else {
+                  navigate('/ilan-ekle');
+                }
+              }}
               className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium text-sm hover:shadow-lg hover:shadow-blue-200 transition-all hover:-translate-y-0.5"
             >
               <Plus className="w-4 h-4" />
@@ -395,7 +403,15 @@ const Navbar = () => {
 
               {/* İlan Ver - Mobile */}
               <button
-                onClick={() => { navigate('/ilan-ekle'); setMobileMenuOpen(false); }}
+                onClick={() => {
+                  if (!user) {
+                    setShowLoginModal(true);
+                    setMobileMenuOpen(false);
+                  } else {
+                    navigate('/ilan-ekle');
+                    setMobileMenuOpen(false);
+                  }
+                }}
                 className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium"
               >
                 <Plus className="w-5 h-5" />
@@ -405,7 +421,7 @@ const Navbar = () => {
               {/* bilAI - Mobile */}
               <button
                 onClick={() => { navigate('/bilai'); setMobileMenuOpen(false); }}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-medium"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-gray-300 to-gray-400 text-white rounded-xl font-medium"
               >
                 <Bot className="w-5 h-5" />
                 <span>bilAI Asistan</span>
@@ -511,6 +527,11 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+      />
     </header>
   );
 };
