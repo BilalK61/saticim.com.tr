@@ -335,7 +335,7 @@ const AiAssistantPage = () => {
                         ))
                     )}
                 </div>
-                <div className="p-3 border-t border-gray-200" style={{ flexShrink: 0 }}>
+                <div className="px-3 py-5" style={{ flexShrink: 0 }}>
                     <button onClick={startNewConversation} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0015cf] text-white rounded-lg text-sm font-medium hover:bg-[#0010a0]">
                         <Plus size={18} />
                         <span>Yeni Sohbet</span>
