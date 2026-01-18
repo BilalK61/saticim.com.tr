@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Send, Loader2, Bot, Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import bilaiLogo from '../assets/logokucuk.png';
 
 // --- MOCK VERİTABANI VE FONKSİYONLAR ---
 const MOCK_ILANLAR = [
@@ -239,7 +240,7 @@ const AiAssistantPage = () => {
             {/* Sol Panel - Bilgi (Sabit, scroll yok) */}
             <div className="hidden lg:flex lg:w-1/5 flex-col p-5 bg-gray-50 border-r border-gray-200" style={{ height: '100%', overflow: 'hidden' }}>
                 <div className="flex items-center gap-3 mb-4">
-                    <img src="/img/logokucuk.png" alt="bilAI" className="h-12" />
+                    <img src={bilaiLogo} alt="bilAI" className="h-12" />
                     <p className="text-gray-600 text-sm">Yapay Zeka Asistanı</p>
                 </div>
                 <p className="text-gray-700 text-sm mb-6">Aradığınız ilanı saniyeler içinde bulun.</p>
