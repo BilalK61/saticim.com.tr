@@ -7,18 +7,18 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilPage from './pages/ProfilPage';
 import Kategoriler from './pages/kategoriler';
-import Emlak from './pages/Emlak';
-import Vasita from './pages/Vasita';
-import Elektronik from './pages/Elektronik';
-import IsIlanlari from './pages/IsIlanlari';
-import EvEsyalari from './pages/EvEsyalari';
-import Giyim from './pages/Giyim';
-import Spor from './pages/Spor';
-import Kozmetik from './pages/kozmetik';
-import KitapDergi from './pages/kitap-dergi';
-import HobiOyun from './pages/hobi-oyun';
-import Hizmetler from './pages/hizmetler';
-import AnneBebek from './pages/anne-bebek';
+import Emlak from './pages/ilansayfalari/Emlak';
+import Vasita from './pages/ilansayfalari/Vasita';
+import Elektronik from './pages/ilansayfalari/Elektronik';
+import IsIlanlari from './pages/ilansayfalari/IsIlanlari';
+import EvEsyalari from './pages/ilansayfalari/EvEsyalari';
+import Giyim from './pages/ilansayfalari/Giyim';
+import Spor from './pages/ilansayfalari/Spor';
+import Kozmetik from './pages/ilansayfalari/kozmetik';
+import KitapDergi from './pages/ilansayfalari/kitap-dergi';
+import HobiOyun from './pages/ilansayfalari/hobi-oyun';
+import Hizmetler from './pages/ilansayfalari/hizmetler';
+import AnneBebek from './pages/ilansayfalari/anne-bebek';
 import Mesajlar from './pages/Mesajlar';
 import IlanDetay from './pages/ilanDetay';
 import IlanEkle from './pages/ilanEkle';
@@ -36,16 +36,12 @@ import AdminRoute from './admin/AdminRoute';
 import AdminSettings from './admin/Settings';
 import AdminReports from './admin/Reports';
 
-// ...existing imports
-import FloatingActionButton from './components/FloatingActionButton';
-
 const MainLayout = () => (
   <div className="app font-sans text-gray-900">
     <Navbar />
     <main>
       <Outlet />
     </main>
-    <FloatingActionButton />
   </div>
 );
 

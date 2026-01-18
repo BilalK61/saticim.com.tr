@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import Footer from '../components/Footer';
-import { Search, Filter, Smartphone, Monitor, Laptop, Tv, MapPin, ChevronDown, ChevronUp, SlidersHorizontal, Battery, Wifi } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
+import Footer from '../../components/Footer';
+import { Search, Home, MapPin, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 
-const Elektronik = () => {
+const Emlak = () => {
     // Location States
     const [cities, setCities] = useState([]);
     const [districts, setDistricts] = useState([]);
@@ -15,11 +15,16 @@ const Elektronik = () => {
     // Filter States
     const [category, setCategory] = useState('');
     const [subCategory, setSubCategory] = useState('');
-    const [brand, setBrand] = useState('');
+    const [roomCount, setRoomCount] = useState('');
     const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-    const [condition, setCondition] = useState('');
-    const [warranty, setWarranty] = useState('');
+    const [sizeRange, setSizeRange] = useState({ min: '', max: '' });
+    const [buildingAge, setBuildingAge] = useState('');
+    const [heating, setHeating] = useState('');
+    const [floor, setFloor] = useState('');
     const [keyword, setKeyword] = useState('');
+
+    // Filter Visibility State
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Applied Filters (Triggered by button)
     const [appliedFilters, setAppliedFilters] = useState({
@@ -28,10 +33,12 @@ const Elektronik = () => {
         selectedNeighborhood: '',
         category: '',
         subCategory: '',
-        brand: '',
+        roomCount: '',
         priceRange: { min: '', max: '' },
-        condition: '',
-        warranty: '',
+        sizeRange: { min: '', max: '' },
+        buildingAge: '',
+        heating: '',
+        floor: '',
         keyword: ''
     });
 
@@ -42,17 +49,16 @@ const Elektronik = () => {
             selectedNeighborhood,
             category,
             subCategory,
-            brand,
+            roomCount,
             priceRange,
-            condition,
-            warranty,
+            sizeRange,
+            buildingAge,
+            heating,
+            floor,
             keyword
         });
+        setShowMobileFilters(false); // Close mobile filters after applying
     };
-
-    // Data States
-    const [listings, setListings] = useState([]);
-    const [loadingListings, setLoadingListings] = useState(false);
 
     useEffect(() => {
         fetchCities();
@@ -77,11 +83,6 @@ const Elektronik = () => {
         }
         setSelectedNeighborhood('');
     }, [selectedDistrict]);
-
-    // Fetch listings when filters change
-    useEffect(() => {
-        fetchListings();
-    }, [appliedFilters]);
 
     const fetchCities = async () => {
         try {
@@ -127,6 +128,33 @@ const Elektronik = () => {
         }
     };
 
+    const categories = [
+        { id: 'konut', name: 'Konut' },
+        { id: 'isyeri', name: 'İş Yeri' },
+        { id: 'arsa', name: 'Arsa' },
+        { id: 'devremulk', name: 'Devremülk' },
+        { id: 'turistik', name: 'Turistik Tesis' }
+    ];
+
+    const subCategories = {
+        'konut': ['Daire', 'Residence', 'Müstakil Ev', 'Villa', 'Çiftlik Evi', 'Yalı', 'Yazlık'],
+        'isyeri': ['Dükkan & Mağaza', 'Ofis & Büro', 'Depo & Antrepo', 'Fabrika', 'Plaza Katı'],
+        'arsa': ['Satılık Arsa', 'Kiralık Arsa'],
+        // ... extend as needed
+    };
+
+    const roomCounts = ['1+0', '1+1', '2+0', '2+1', '2+2', '3+1', '3+2', '4+1', '4+2', '5+1', '5+2', '6+ A üzeri'];
+    const ages = ['0', '1', '2', '3', '4', '5-10', '11-15', '16-20', '21 ve üzeri'];
+    const heatings = ['Kombi (Doğalgaz)', 'Merkezi', 'Merkezi (Pay Ölçer)', 'Yerden Isıtma', 'Klima', 'Soba', 'Yok'];
+    // Data States
+    const [listings, setListings] = useState([]);
+    const [loadingListings, setLoadingListings] = useState(false);
+
+    // Fetch listings when filters change
+    useEffect(() => {
+        fetchListings();
+    }, [appliedFilters]);
+
     const fetchListings = async () => {
         setLoadingListings(true);
         try {
@@ -135,7 +163,7 @@ const Elektronik = () => {
                 .from('listings')
                 .select('*')
                 .eq('status', 'approved')
-                .eq('category', 'elektronik')
+                .eq('category', 'emlak')
                 .order('created_at', { ascending: false });
 
             // Apply Filters
@@ -150,14 +178,11 @@ const Elektronik = () => {
             }
 
             // JSONB Filters
-            if (appliedFilters.brand) {
-                query = query.contains('details', { brand: appliedFilters.brand });
+            if (appliedFilters.roomCount) {
+                query = query.contains('details', { room: appliedFilters.roomCount });
             }
             if (appliedFilters.subCategory) {
-                query = query.contains('details', { subCategory: appliedFilters.subCategory });
-            }
-            if (appliedFilters.condition) {
-                query = query.contains('details', { condition: appliedFilters.condition });
+                query = query.contains('details', { type: appliedFilters.subCategory }); // Assuming type maps to subCategory
             }
 
             const { data: listingsData, error: listingsError } = await query;
@@ -208,24 +233,6 @@ const Elektronik = () => {
         }
     };
 
-    const categories = [
-        { id: 'telefon', name: 'Telefon', icon: Smartphone },
-        { id: 'bilgisayar', name: 'Bilgisayar', icon: Laptop },
-        { id: 'tv', name: 'TV & Ses Sistemleri', icon: Tv },
-        { id: 'beyaz-esya', name: 'Beyaz Eşya', icon: Monitor }, // Placeholder icon
-        { id: 'foto-kamera', name: 'Fotoğraf & Kamera', icon: Wifi }, // Placeholder
-        { id: 'oyun', name: 'Oyun & Konsol', icon: Battery }, // Placeholder
-    ];
-
-    const subCategories = {
-        'telefon': ['Cep Telefonu', 'Sabit Telefon', 'Telsiz', 'Aksesuar', 'Numara', 'Giyilebilir Teknoloji'],
-        'bilgisayar': ['Dizüstü', 'Masaüstü', 'Tablet', 'Sunucu', 'Çevre Birimleri', 'Bileşenler'],
-        'tv': ['Televizyon', 'Uydu Sistemleri', 'Ev Sinema Sistemleri', 'Projeksiyon', 'Medya Oynatıcı'],
-        // ... extend as needed
-    };
-
-    const brands = ['Apple', 'Samsung', 'Xiaomi', 'Huawei', 'Oppo', 'Sony', 'LG', 'Asus', 'Lenovo', 'HP', 'Dell', 'Monster', 'Casper'];
-
     const FilterSection = ({ title, children, isOpen = true }) => {
         const [show, setShow] = useState(isOpen);
         return (
@@ -242,6 +249,7 @@ const Elektronik = () => {
         );
     };
 
+
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
             <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
@@ -249,43 +257,56 @@ const Elektronik = () => {
                 {/* Sidebar Filters */}
                 <aside className="w-full lg:w-72 flex-shrink-0">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                        <div
+                            className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between cursor-pointer lg:cursor-default"
+                            onClick={() => setShowMobileFilters(!showMobileFilters)}
+                        >
                             <div className="flex items-center gap-2 font-bold text-gray-800">
                                 <SlidersHorizontal size={20} className="text-blue-600" />
                                 <span>Detaylı Filtre</span>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setCategory('');
-                                    setSubCategory('');
-                                    setBrand('');
-                                    setPriceRange({ min: '', max: '' });
-                                    setCondition('');
-                                    setWarranty('');
-                                    setKeyword('');
-                                    setSelectedCity('');
-                                    setSelectedDistrict('');
-                                    setSelectedNeighborhood('');
-                                    setAppliedFilters({
-                                        selectedCity: '',
-                                        selectedDistrict: '',
-                                        selectedNeighborhood: '',
-                                        category: '',
-                                        subCategory: '',
-                                        brand: '',
-                                        priceRange: { min: '', max: '' },
-                                        condition: '',
-                                        warranty: '',
-                                        keyword: ''
-                                    });
-                                }}
-                                className="text-xs text-blue-600 hover:underline font-medium"
-                            >
-                                Temizle
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCategory('');
+                                        setSubCategory('');
+                                        setRoomCount('');
+                                        setPriceRange({ min: '', max: '' });
+                                        setSizeRange({ min: '', max: '' });
+                                        setBuildingAge('');
+                                        setHeating('');
+                                        setFloor('');
+                                        setKeyword('');
+                                        setSelectedCity('');
+                                        setSelectedDistrict('');
+                                        setSelectedNeighborhood('');
+                                        setAppliedFilters({
+                                            selectedCity: '',
+                                            selectedDistrict: '',
+                                            selectedNeighborhood: '',
+                                            category: '',
+                                            subCategory: '',
+                                            roomCount: '',
+                                            priceRange: { min: '', max: '' },
+                                            sizeRange: { min: '', max: '' },
+                                            buildingAge: '',
+                                            heating: '',
+                                            floor: '',
+                                            keyword: ''
+                                        });
+                                    }}
+                                    className="text-xs text-blue-600 hover:underline font-medium"
+                                >
+                                    Temizle
+                                </button>
+                                <div className="lg:hidden text-gray-500">
+                                    {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="p-4">
+                        <div className={`p-4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
                             {/* Kelime ile Filtrele */}
                             <FilterSection title="Kelime ile Filtrele">
                                 <div className="relative">
@@ -335,7 +356,7 @@ const Elektronik = () => {
                             </FilterSection>
 
                             {/* Category Drilldown */}
-                            <FilterSection title="Kategori">
+                            <FilterSection title="Emlak Tipi">
                                 <div className="space-y-2.5">
                                     <select
                                         value={category}
@@ -355,26 +376,9 @@ const Elektronik = () => {
                                         disabled={!category || !subCategories[category]}
                                         className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
                                     >
-                                        <option value="">Alt Kategori Seçin</option>
+                                        <option value="">Tip Seçin</option>
                                         {category && subCategories[category] && subCategories[category].map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
-                                </div>
-                            </FilterSection>
-
-                            {/* Brand */}
-                            <FilterSection title="Marka" isOpen={true}>
-                                <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                                    {brands.map(b => (
-                                        <label key={b} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                checked={brand === b} // Example, normally multi-select
-                                                onChange={() => setBrand(brand === b ? '' : b)}
-                                            />
-                                            {b}
-                                        </label>
-                                    ))}
                                 </div>
                             </FilterSection>
 
@@ -398,25 +402,92 @@ const Elektronik = () => {
                                 </div>
                             </FilterSection>
 
-                            {/* Condition */}
-                            <FilterSection title="Durum" isOpen={false}>
-                                <div className="space-y-2">
-                                    {['Sıfır', 'İkinci El', 'Yenilenmiş (Refurbished)'].map(cond => (
-                                        <label key={cond} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                            {cond}
+                            {/* Size (m2) */}
+                            <FilterSection title="Metrekare (m²)">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="number"
+                                        placeholder="Min"
+                                        className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={sizeRange.min}
+                                        onChange={e => setSizeRange({ ...sizeRange, min: e.target.value })}
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Max"
+                                        className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={sizeRange.max}
+                                        onChange={e => setSizeRange({ ...sizeRange, max: e.target.value })}
+                                    />
+                                </div>
+                            </FilterSection>
+
+                            {/* Room Count */}
+                            <FilterSection title="Oda Sayısı">
+                                <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                    {roomCounts.map(rc => (
+                                        <label key={rc} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                checked={roomCount === rc} // Example logic, normally multi-select
+                                                onChange={() => setRoomCount(rc)}
+                                            />
+                                            {rc}
                                         </label>
                                     ))}
                                 </div>
                             </FilterSection>
 
-                            {/* Warranty */}
-                            <FilterSection title="Garanti Durumu" isOpen={false}>
+                            {/* Building Age */}
+                            <FilterSection title="Bina Yaşı" isOpen={false}>
                                 <div className="space-y-2">
-                                    {['Garantisi Var', 'Garantisi Yok', 'Kutu/Fatura Mevcut'].map(w => (
-                                        <label key={w} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                    {ages.map(age => (
+                                        <label key={age} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
                                             <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                            {w}
+                                            {age}
+                                        </label>
+                                    ))}
+                                </div>
+                            </FilterSection>
+
+                            {/* Floor */}
+                            <FilterSection title="Bulunduğu Kat" isOpen={false}>
+                                <select
+                                    className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={floor}
+                                    onChange={(e) => setFloor(e.target.value)}
+                                >
+                                    <option value="">Seçiniz</option>
+                                    <option value="Bahçe Katı">Bahçe Katı</option>
+                                    <option value="Giriş Katı">Giriş Katı</option>
+                                    <option value="Yüksek Giriş">Yüksek Giriş</option>
+                                    <option value="Müstakil">Müstakil</option>
+                                    {[...Array(30).keys()].map(i => <option key={i + 1} value={i + 1}>{i + 1}. Kat</option>)}
+                                    <option value="Kot 1">Kot 1</option>
+                                    <option value="Kot 2">Kot 2</option>
+                                </select>
+                            </FilterSection>
+
+                            {/* Heating */}
+                            <FilterSection title="Isıtma" isOpen={false}>
+                                <div className="space-y-2">
+                                    {heatings.map(h => (
+                                        <label key={h} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                            {h}
+                                        </label>
+                                    ))}
+                                </div>
+                            </FilterSection>
+
+                            {/* From Whom */}
+                            <FilterSection title="Kimden" isOpen={false}>
+                                <div className="space-y-2">
+                                    {['Sahibinden', 'Emlak Ofisinden', 'İnşaat Firmasından', 'Bankadan'].map(from => (
+                                        <label key={from} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                            {from}
                                         </label>
                                     ))}
                                 </div>
@@ -439,7 +510,7 @@ const Elektronik = () => {
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div>
                             <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                {appliedFilters.category ? categories.find(c => c.id === appliedFilters.category)?.name : 'Tüm Elektronik İlanları'}
+                                {appliedFilters.category ? categories.find(c => c.id === appliedFilters.category)?.name : 'Tüm Emlak İlanları'}
                                 {subCategory && (
                                     <>
                                         <span className="text-gray-400">/</span>
@@ -483,9 +554,9 @@ const Elektronik = () => {
                                                 <MapPin size={12} />
                                                 {listing.cities?.name} / {listing.districts?.name}
                                             </div>
-                                            {listing.details?.condition && (
+                                            {listing.details?.type && (
                                                 <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                                    {listing.details.condition}
+                                                    {listing.details.type}
                                                 </div>
                                             )}
                                         </div>
@@ -499,14 +570,11 @@ const Elektronik = () => {
                                                 {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
                                             </div>
                                             <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                                                {/* Using optional chaining for safety */}
-                                                <span>{listing.details?.subCategory}</span>
-                                                {listing.details?.brand && (
-                                                    <>
-                                                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                        <span>{listing.details.brand}</span>
-                                                    </>
-                                                )}
+                                                <span>{listing.details?.room}</span>
+                                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                <span>{listing.details?.size} m²</span>
+                                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                <span>{listing.details?.floor}</span>
                                             </div>
                                             <div className="text-xs text-gray-400 text-right">
                                                 {new Date(listing.created_at).toLocaleDateString('tr-TR')}
@@ -519,7 +587,7 @@ const Elektronik = () => {
                     ) : (
                         <div className="bg-white rounded-xl shadow-sm p-16 text-center border border-gray-200 min-h-[400px] flex flex-col items-center justify-center">
                             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-                                <Smartphone className="w-10 h-10 text-blue-500" />
+                                <Home className="w-10 h-10 text-blue-500" />
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">İlan Bulunamadı</h3>
                             <p className="text-gray-500 max-w-md mx-auto mb-8">
@@ -529,23 +597,26 @@ const Elektronik = () => {
                                 onClick={() => {
                                     setCategory('');
                                     setSubCategory('');
-                                    setBrand('');
+                                    setRoomCount('');
                                     setPriceRange({ min: '', max: '' });
-                                    setCondition('');
-                                    setWarranty('');
+                                    setSizeRange({ min: '', max: '' });
+                                    setBuildingAge('');
+                                    setHeating('');
+                                    setFloor('');
                                     setSelectedCity('');
                                     setSelectedDistrict('');
-                                    setSelectedNeighborhood('');
                                     setAppliedFilters({
                                         selectedCity: '',
                                         selectedDistrict: '',
                                         selectedNeighborhood: '',
                                         category: '',
                                         subCategory: '',
-                                        brand: '',
+                                        roomCount: '',
                                         priceRange: { min: '', max: '' },
-                                        condition: '',
-                                        warranty: ''
+                                        sizeRange: { min: '', max: '' },
+                                        buildingAge: '',
+                                        heating: '',
+                                        floor: ''
                                     });
                                 }}
                                 className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
@@ -561,4 +632,4 @@ const Elektronik = () => {
     );
 }
 
-export default Elektronik;
+export default Emlak;

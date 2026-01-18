@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import Footer from '../components/Footer';
-import { Search, Filter, Baby, MapPin, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
+import Footer from '../../components/Footer';
+import { Search, Filter, Dumbbell, MapPin, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 
-const AnneBebek = () => {
+const Spor = () => {
     // Location States
     const [cities, setCities] = useState([]);
     const [districts, setDistricts] = useState([]);
@@ -15,6 +15,9 @@ const AnneBebek = () => {
     const [priceRange, setPriceRange] = useState({ min: '', max: '' });
     const [condition, setCondition] = useState('');
     const [keyword, setKeyword] = useState('');
+
+    // Filter Visibility State
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Applied Filters
     const [appliedFilters, setAppliedFilters] = useState({
@@ -28,6 +31,7 @@ const AnneBebek = () => {
 
     const handleApplyFilters = () => {
         setAppliedFilters({ selectedCity, selectedDistrict, subCategory, priceRange, condition, keyword });
+        setShowMobileFilters(false);
     };
 
     const [listings, setListings] = useState([]);
@@ -55,7 +59,7 @@ const AnneBebek = () => {
     const fetchListings = async () => {
         setLoadingListings(true);
         try {
-            let query = supabase.from('listings').select('*').eq('status', 'approved').eq('category', 'anne-bebek').order('created_at', { ascending: false });
+            let query = supabase.from('listings').select('*').eq('status', 'approved').eq('category', 'spor').order('created_at', { ascending: false });
 
             if (appliedFilters.selectedCity) query = query.eq('city_id', appliedFilters.selectedCity);
             if (appliedFilters.selectedDistrict) query = query.eq('district_id', appliedFilters.selectedDistrict);
@@ -112,7 +116,7 @@ const AnneBebek = () => {
         );
     };
 
-    const categories = ['Bebek Arabası', 'Oto Koltuğu', 'Mama Sandalyesi', 'Bebek Giyim', 'Oyuncak', 'Bakım Ürünleri', 'Hamile Giyim', 'Diğer'];
+    const categories = ['Fitness & Kondisyon', 'Takım Sporları', 'Doğa Sporları', 'Su Sporları', 'Bisiklet', 'Kamp & Outdoor', 'Avcılık & Balıkçılık', 'Kış Sporları'];
 
     return (
         <div className="min-h-screen flex flex-col bg-gray-50">
@@ -121,13 +125,20 @@ const AnneBebek = () => {
                 {/* Sidebar Filters */}
                 <aside className="w-full lg:w-72 flex-shrink-0">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                        <div
+                            className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between cursor-pointer lg:cursor-default"
+                            onClick={() => setShowMobileFilters(!showMobileFilters)}
+                        >
                             <div className="flex items-center gap-2 font-bold text-gray-800">
                                 <SlidersHorizontal size={20} className="text-blue-600" />
                                 <span>Detaylı Filtre</span>
                             </div>
+                            <div className="lg:hidden text-gray-500">
+                                {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </div>
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setSubCategory('');
                                     setPriceRange({ min: '', max: '' });
                                     setCondition('');
@@ -149,13 +160,13 @@ const AnneBebek = () => {
                             </button>
                         </div>
 
-                        <div className="p-4">
+                        <div className={`p-4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
                             {/* Keyword Search */}
                             <FilterSection title="Kelime ile Filtrele">
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        placeholder="Ürün ara..."
+                                        placeholder="Spor malzemesi ara..."
                                         className="w-full p-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-9"
                                         value={keyword}
                                         onChange={(e) => setKeyword(e.target.value)}
@@ -258,7 +269,9 @@ const AnneBebek = () => {
                 <main className="flex-1">
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900">Anne & Bebek İlanları</h1>
+                            <h1 className="text-xl font-bold text-gray-900">
+                                Spor & Outdoor İlanları
+                            </h1>
                             <p className="text-sm text-gray-500 mt-1">Arama kriterlerinize uygun ilanlar listeleniyor</p>
                         </div>
                         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -283,7 +296,7 @@ const AnneBebek = () => {
                                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
                                         <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                                             <img
-                                                src={l.images?.[0] || 'https://placehold.co/400x300?text=Anne+Bebek'}
+                                                src={l.images?.[0] || 'https://placehold.co/400x300?text=Spor'}
                                                 alt={l.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                                             />
@@ -319,7 +332,7 @@ const AnneBebek = () => {
                     ) : (
                         <div className="bg-white rounded-xl shadow-sm p-16 text-center border border-gray-200 min-h-[400px] flex flex-col items-center justify-center">
                             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-                                <Baby className="w-10 h-10 text-blue-500" />
+                                <Dumbbell className="w-10 h-10 text-blue-500" />
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">İlan Bulunamadı</h3>
                             <p className="text-gray-500 max-w-md mx-auto mb-8">
@@ -355,4 +368,4 @@ const AnneBebek = () => {
     );
 };
 
-export default AnneBebek;
+export default Spor;

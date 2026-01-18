@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import Footer from '../components/Footer';
-import { Search, Filter, Shirt, MapPin, ChevronDown, ChevronUp, SlidersHorizontal, ShoppingBag } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
+import Footer from '../../components/Footer';
+import { Search, Filter, Smartphone, Monitor, Laptop, Tv, MapPin, ChevronDown, ChevronUp, SlidersHorizontal, Battery, Wifi } from 'lucide-react';
 
-const Giyim = () => {
+const Elektronik = () => {
     // Location States
     const [cities, setCities] = useState([]);
     const [districts, setDistricts] = useState([]);
@@ -15,12 +15,14 @@ const Giyim = () => {
     // Filter States
     const [category, setCategory] = useState('');
     const [subCategory, setSubCategory] = useState('');
-    const [size, setSize] = useState('');
-    const [color, setColor] = useState('');
-    const [priceRange, setPriceRange] = useState({ min: '', max: '' });
     const [brand, setBrand] = useState('');
+    const [priceRange, setPriceRange] = useState({ min: '', max: '' });
     const [condition, setCondition] = useState('');
+    const [warranty, setWarranty] = useState('');
     const [keyword, setKeyword] = useState('');
+
+    // Filter Visibility State
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Applied Filters (Triggered by button)
     const [appliedFilters, setAppliedFilters] = useState({
@@ -29,11 +31,10 @@ const Giyim = () => {
         selectedNeighborhood: '',
         category: '',
         subCategory: '',
-        size: '',
-        color: '',
-        priceRange: { min: '', max: '' },
         brand: '',
+        priceRange: { min: '', max: '' },
         condition: '',
+        warranty: '',
         keyword: ''
     });
 
@@ -44,14 +45,18 @@ const Giyim = () => {
             selectedNeighborhood,
             category,
             subCategory,
-            size,
-            color,
-            priceRange,
             brand,
+            priceRange,
             condition,
+            warranty,
             keyword
         });
+        setShowMobileFilters(false);
     };
+
+    // Data States
+    const [listings, setListings] = useState([]);
+    const [loadingListings, setLoadingListings] = useState(false);
 
     useEffect(() => {
         fetchCities();
@@ -77,9 +82,18 @@ const Giyim = () => {
         setSelectedNeighborhood('');
     }, [selectedDistrict]);
 
+    // Fetch listings when filters change
+    useEffect(() => {
+        fetchListings();
+    }, [appliedFilters]);
+
     const fetchCities = async () => {
         try {
-            const { data, error } = await supabase.from('cities').select('*').order('name');
+            const { data, error } = await supabase
+                .from('cities')
+                .select('*')
+                .order('name');
+
             if (error) throw error;
             setCities(data);
         } catch (error) {
@@ -89,7 +103,12 @@ const Giyim = () => {
 
     const fetchDistricts = async (cityId) => {
         try {
-            const { data, error } = await supabase.from('districts').select('*').eq('city_id', cityId).order('name');
+            const { data, error } = await supabase
+                .from('districts')
+                .select('*')
+                .eq('city_id', cityId)
+                .order('name');
+
             if (error) throw error;
             setDistricts(data);
         } catch (error) {
@@ -99,7 +118,12 @@ const Giyim = () => {
 
     const fetchNeighborhoods = async (districtId) => {
         try {
-            const { data, error } = await supabase.from('neighborhoods').select('*').eq('district_id', districtId).order('name');
+            const { data, error } = await supabase
+                .from('neighborhoods')
+                .select('*')
+                .eq('district_id', districtId)
+                .order('name');
+
             if (error) throw error;
             setNeighborhoods(data);
         } catch (error) {
@@ -107,53 +131,15 @@ const Giyim = () => {
         }
     };
 
-    const categories = [
-        { id: 'kadin', name: 'Kadın' },
-        { id: 'erkek', name: 'Erkek' },
-        { id: 'cocuk', name: 'Çocuk' },
-        { id: 'bebek', name: 'Bebek' }
-    ];
-
-    const subCategories = [
-        'Elbise', 'Tişört', 'Gömlek', 'Pantolon', 'Jean', 'Etek', 'Ceket', 'Mont & Kaban', 'Ayakkabı', 'Çanta', 'Aksesuar', 'Spor Giyim', 'İç Giyim'
-    ];
-
-    const sizes = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Standart'];
-    const shoeSizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
-
-    const colors = [
-        { name: 'Siyah', code: '#000000' },
-        { name: 'Beyaz', code: '#FFFFFF', border: true },
-        { name: 'Kırmızı', code: '#EF4444' },
-        { name: 'Mavi', code: '#3B82F6' },
-        { name: 'Yeşil', code: '#10B981' },
-        { name: 'Sarı', code: '#F59E0B' },
-        { name: 'Lacivert', code: '#1E3A8A' },
-        { name: 'Gri', code: '#6B7280' },
-        { name: 'Bej', code: '#F5F5DC', border: true },
-        { name: 'Kahverengi', code: '#78350F' },
-        { name: 'Pembe', code: '#EC4899' },
-        { name: 'Mor', code: '#8B5CF6' },
-    ];
-
-    // Data States
-    const [listings, setListings] = useState([]);
-    const [loadingListings, setLoadingListings] = useState(false);
-
-    // Fetch listings when filters change
-    useEffect(() => {
-        fetchListings();
-    }, [appliedFilters]);
-
     const fetchListings = async () => {
         setLoadingListings(true);
         try {
-            // 1. Base Query
+            // 1. Base Query (sadece onaylı ilanlar)
             let query = supabase
                 .from('listings')
                 .select('*')
                 .eq('status', 'approved')
-                .eq('category', 'giyim')
+                .eq('category', 'elektronik')
                 .order('created_at', { ascending: false });
 
             // Apply Filters
@@ -168,14 +154,14 @@ const Giyim = () => {
             }
 
             // JSONB Filters
-            if (appliedFilters.size) {
-                query = query.contains('details', { size: appliedFilters.size });
-            }
-            if (appliedFilters.color) {
-                query = query.contains('details', { color: appliedFilters.color });
-            }
             if (appliedFilters.brand) {
                 query = query.contains('details', { brand: appliedFilters.brand });
+            }
+            if (appliedFilters.subCategory) {
+                query = query.contains('details', { subCategory: appliedFilters.subCategory });
+            }
+            if (appliedFilters.condition) {
+                query = query.contains('details', { condition: appliedFilters.condition });
             }
 
             const { data: listingsData, error: listingsError } = await query;
@@ -226,6 +212,24 @@ const Giyim = () => {
         }
     };
 
+    const categories = [
+        { id: 'telefon', name: 'Telefon', icon: Smartphone },
+        { id: 'bilgisayar', name: 'Bilgisayar', icon: Laptop },
+        { id: 'tv', name: 'TV & Ses Sistemleri', icon: Tv },
+        { id: 'beyaz-esya', name: 'Beyaz Eşya', icon: Monitor }, // Placeholder icon
+        { id: 'foto-kamera', name: 'Fotoğraf & Kamera', icon: Wifi }, // Placeholder
+        { id: 'oyun', name: 'Oyun & Konsol', icon: Battery }, // Placeholder
+    ];
+
+    const subCategories = {
+        'telefon': ['Cep Telefonu', 'Sabit Telefon', 'Telsiz', 'Aksesuar', 'Numara', 'Giyilebilir Teknoloji'],
+        'bilgisayar': ['Dizüstü', 'Masaüstü', 'Tablet', 'Sunucu', 'Çevre Birimleri', 'Bileşenler'],
+        'tv': ['Televizyon', 'Uydu Sistemleri', 'Ev Sinema Sistemleri', 'Projeksiyon', 'Medya Oynatıcı'],
+        // ... extend as needed
+    };
+
+    const brands = ['Apple', 'Samsung', 'Xiaomi', 'Huawei', 'Oppo', 'Sony', 'LG', 'Asus', 'Lenovo', 'HP', 'Dell', 'Monster', 'Casper'];
+
     const FilterSection = ({ title, children, isOpen = true }) => {
         const [show, setShow] = useState(isOpen);
         return (
@@ -249,20 +253,26 @@ const Giyim = () => {
                 {/* Sidebar Filters */}
                 <aside className="w-full lg:w-72 flex-shrink-0">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                        <div
+                            className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between cursor-pointer lg:cursor-default"
+                            onClick={() => setShowMobileFilters(!showMobileFilters)}
+                        >
                             <div className="flex items-center gap-2 font-bold text-gray-800">
                                 <SlidersHorizontal size={20} className="text-blue-600" />
                                 <span>Detaylı Filtre</span>
                             </div>
+                            <div className="lg:hidden text-gray-500">
+                                {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </div>
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setCategory('');
                                     setSubCategory('');
-                                    setSize('');
-                                    setPriceRange({ min: '', max: '' });
-                                    setColor('');
                                     setBrand('');
+                                    setPriceRange({ min: '', max: '' });
                                     setCondition('');
+                                    setWarranty('');
                                     setKeyword('');
                                     setSelectedCity('');
                                     setSelectedDistrict('');
@@ -273,11 +283,10 @@ const Giyim = () => {
                                         selectedNeighborhood: '',
                                         category: '',
                                         subCategory: '',
-                                        size: '',
-                                        color: '',
-                                        priceRange: { min: '', max: '' },
                                         brand: '',
+                                        priceRange: { min: '', max: '' },
                                         condition: '',
+                                        warranty: '',
                                         keyword: ''
                                     });
                                 }}
@@ -287,8 +296,8 @@ const Giyim = () => {
                             </button>
                         </div>
 
-                        <div className="p-4">
-                            {/* Keyword Search */}
+                        <div className={`p-4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
+                            {/* Kelime ile Filtrele */}
                             <FilterSection title="Kelime ile Filtrele">
                                 <div className="relative">
                                     <input
@@ -341,38 +350,41 @@ const Giyim = () => {
                                 <div className="space-y-2.5">
                                     <select
                                         value={category}
-                                        onChange={(e) => setCategory(e.target.value)}
+                                        onChange={(e) => {
+                                            setCategory(e.target.value);
+                                            setSubCategory('');
+                                        }}
                                         className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     >
-                                        <option value="">Cinsiyet Seçin</option>
+                                        <option value="">Kategori Seçin</option>
                                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
 
                                     <select
                                         value={subCategory}
                                         onChange={(e) => setSubCategory(e.target.value)}
-                                        className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        disabled={!category || !subCategories[category]}
+                                        className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
                                     >
-                                        <option value="">Ürün Tipi Seçin</option>
-                                        {subCategories.map(s => <option key={s} value={s}>{s}</option>)}
+                                        <option value="">Alt Kategori Seçin</option>
+                                        {category && subCategories[category] && subCategories[category].map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
                             </FilterSection>
 
-                            {/* Size */}
-                            <FilterSection title="Beden">
-                                <div className="flex flex-wrap gap-2">
-                                    {(subCategory === 'Ayakkabı' ? shoeSizes : sizes).map(s => (
-                                        <button
-                                            key={s}
-                                            onClick={() => setSize(s === size ? '' : s)}
-                                            className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${size === s
-                                                ? 'bg-blue-600 text-white border-blue-600'
-                                                : 'bg-white text-gray-700 border-gray-200 hover:border-blue-500 hover:text-blue-600'
-                                                }`}
-                                        >
-                                            {s}
-                                        </button>
+                            {/* Brand */}
+                            <FilterSection title="Marka" isOpen={true}>
+                                <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                    {brands.map(b => (
+                                        <label key={b} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                checked={brand === b} // Example, normally multi-select
+                                                onChange={() => setBrand(brand === b ? '' : b)}
+                                            />
+                                            {b}
+                                        </label>
                                     ))}
                                 </div>
                             </FilterSection>
@@ -397,33 +409,25 @@ const Giyim = () => {
                                 </div>
                             </FilterSection>
 
-                            {/* Color */}
-                            <FilterSection title="Renk">
-                                <div className="flex flex-wrap gap-3">
-                                    {colors.map(c => (
-                                        <button
-                                            key={c.name}
-                                            onClick={() => setColor(c.name === color ? '' : c.name)}
-                                            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 flex items-center justify-center relative ${color === c.name ? 'ring-2 ring-offset-2 ring-blue-500' : ''
-                                                }`}
-                                            title={c.name}
-                                            style={{ backgroundColor: c.code, borderColor: c.border ? '#e5e7eb' : 'transparent' }}
-                                        >
-                                            {color === c.name && (
-                                                <div className={`w-2 h-2 rounded-full ${c.name === 'Beyaz' || c.name === 'Bej' ? 'bg-black' : 'bg-white'}`} />
-                                            )}
-                                        </button>
+                            {/* Condition */}
+                            <FilterSection title="Durum" isOpen={false}>
+                                <div className="space-y-2">
+                                    {['Sıfır', 'İkinci El', 'Yenilenmiş (Refurbished)'].map(cond => (
+                                        <label key={cond} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                            {cond}
+                                        </label>
                                     ))}
                                 </div>
                             </FilterSection>
 
-                            {/* Condition */}
-                            <FilterSection title="Durum" isOpen={false}>
+                            {/* Warranty */}
+                            <FilterSection title="Garanti Durumu" isOpen={false}>
                                 <div className="space-y-2">
-                                    {['Yeni Etiketli', 'Yeni Gibi', 'Az Kullanılmış', 'Kullanılmış'].map(cond => (
-                                        <label key={cond} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                    {['Garantisi Var', 'Garantisi Yok', 'Kutu/Fatura Mevcut'].map(w => (
+                                        <label key={w} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
                                             <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                            {cond}
+                                            {w}
                                         </label>
                                     ))}
                                 </div>
@@ -446,7 +450,7 @@ const Giyim = () => {
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div>
                             <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                {appliedFilters.category ? categories.find(c => c.id === appliedFilters.category)?.name : 'Tüm Giyim İlanları'}
+                                {appliedFilters.category ? categories.find(c => c.id === appliedFilters.category)?.name : 'Tüm Elektronik İlanları'}
                                 {subCategory && (
                                     <>
                                         <span className="text-gray-400">/</span>
@@ -490,9 +494,9 @@ const Giyim = () => {
                                                 <MapPin size={12} />
                                                 {listing.cities?.name} / {listing.districts?.name}
                                             </div>
-                                            {listing.details?.size && (
+                                            {listing.details?.condition && (
                                                 <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                                    {listing.details.size}
+                                                    {listing.details.condition}
                                                 </div>
                                             )}
                                         </div>
@@ -506,11 +510,14 @@ const Giyim = () => {
                                                 {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
                                             </div>
                                             <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                                                <span>{listing.details?.type}</span>
-                                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                <span>{listing.details?.color}</span>
-                                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                <span>{listing.details?.brand}</span>
+                                                {/* Using optional chaining for safety */}
+                                                <span>{listing.details?.subCategory}</span>
+                                                {listing.details?.brand && (
+                                                    <>
+                                                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                        <span>{listing.details.brand}</span>
+                                                    </>
+                                                )}
                                             </div>
                                             <div className="text-xs text-gray-400 text-right">
                                                 {new Date(listing.created_at).toLocaleDateString('tr-TR')}
@@ -523,7 +530,7 @@ const Giyim = () => {
                     ) : (
                         <div className="bg-white rounded-xl shadow-sm p-16 text-center border border-gray-200 min-h-[400px] flex flex-col items-center justify-center">
                             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-                                <Shirt className="w-10 h-10 text-blue-500" />
+                                <Smartphone className="w-10 h-10 text-blue-500" />
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">İlan Bulunamadı</h3>
                             <p className="text-gray-500 max-w-md mx-auto mb-8">
@@ -533,12 +540,10 @@ const Giyim = () => {
                                 onClick={() => {
                                     setCategory('');
                                     setSubCategory('');
-                                    setSize('');
-                                    setPriceRange({ min: '', max: '' });
-                                    setColor('');
                                     setBrand('');
+                                    setPriceRange({ min: '', max: '' });
                                     setCondition('');
-                                    setKeyword('');
+                                    setWarranty('');
                                     setSelectedCity('');
                                     setSelectedDistrict('');
                                     setSelectedNeighborhood('');
@@ -548,12 +553,10 @@ const Giyim = () => {
                                         selectedNeighborhood: '',
                                         category: '',
                                         subCategory: '',
-                                        size: '',
-                                        color: '',
-                                        priceRange: { min: '', max: '' },
                                         brand: '',
+                                        priceRange: { min: '', max: '' },
                                         condition: '',
-                                        keyword: ''
+                                        warranty: ''
                                     });
                                 }}
                                 className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
@@ -566,8 +569,7 @@ const Giyim = () => {
             </div>
             <Footer />
         </div>
-
     );
-};
+}
 
-export default Giyim;
+export default Elektronik;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import Footer from '../components/Footer';
+import { supabase } from '../../supabaseClient';
+import Footer from '../../components/Footer';
 import { Search, Filter, Briefcase, MapPin, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 
 const IsIlanlari = () => {
@@ -14,6 +14,8 @@ const IsIlanlari = () => {
     const [salaryRange, setSalaryRange] = useState({ min: '', max: '' });
     const [keyword, setKeyword] = useState('');
 
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
+
     const [appliedFilters, setAppliedFilters] = useState({
         selectedCity: '',
         selectedDistrict: '',
@@ -25,6 +27,7 @@ const IsIlanlari = () => {
 
     const handleApplyFilters = () => {
         setAppliedFilters({ selectedCity, selectedDistrict, sector, workingModel, salaryRange, keyword });
+        setShowMobileFilters(false);
     };
 
     const [listings, setListings] = useState([]);
@@ -119,13 +122,20 @@ const IsIlanlari = () => {
                 {/* Sidebar Filters */}
                 <aside className="w-full lg:w-72 flex-shrink-0">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                        <div
+                            className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between cursor-pointer lg:cursor-default"
+                            onClick={() => setShowMobileFilters(!showMobileFilters)}
+                        >
                             <div className="flex items-center gap-2 font-bold text-gray-800">
                                 <SlidersHorizontal size={20} className="text-blue-600" />
                                 <span>Detaylı Filtre</span>
                             </div>
+                            <div className="lg:hidden text-gray-500">
+                                {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </div>
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setSector('');
                                     setWorkingModel('');
                                     setSalaryRange({ min: '', max: '' });
@@ -147,7 +157,7 @@ const IsIlanlari = () => {
                             </button>
                         </div>
 
-                        <div className="p-4">
+                        <div className={`p-4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
                             {/* Keyword Search */}
                             <FilterSection title="Kelime ile Filtrele">
                                 <div className="relative">

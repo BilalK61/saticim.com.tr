@@ -275,29 +275,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Search */}
-        <div className="md:hidden pb-3">
-          <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchInputChange}
-              onFocus={handleSearchInputFocus}
-              placeholder="Ne arıyorsun?"
-              className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              autoComplete="off"
-            />
-            <SearchDropdown
-              suggestions={suggestions}
-              loading={loading}
-              query={searchQuery}
-              show={showSearchDropdown}
-              onClose={() => setShowSearchDropdown(false)}
-              onSelect={() => setSearchQuery('')}
-            />
-          </form>
-        </div>
+
       </div>
 
       {/* Category Navigation */}
@@ -391,6 +369,30 @@ const Navbar = () => {
             className="md:hidden border-t border-gray-100 bg-white overflow-hidden"
           >
             <div className="p-4 space-y-2">
+              {/* Search Bar - Mobile Menu */}
+              <div className="pb-2">
+                <form onSubmit={handleSearch} className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchInputChange}
+                    onFocus={handleSearchInputFocus}
+                    placeholder="Ne arıyorsun?"
+                    className="w-full pl-12 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    autoComplete="off"
+                  />
+                  <SearchDropdown
+                    suggestions={suggestions}
+                    loading={loading}
+                    query={searchQuery}
+                    show={showSearchDropdown}
+                    onClose={() => setShowSearchDropdown(false)}
+                    onSelect={() => setSearchQuery('')}
+                  />
+                </form>
+              </div>
+
               {/* İlan Ver - Mobile */}
               <button
                 onClick={() => { navigate('/ilan-ekle'); setMobileMenuOpen(false); }}

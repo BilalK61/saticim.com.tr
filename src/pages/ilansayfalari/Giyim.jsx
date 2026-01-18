@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import Footer from '../components/Footer';
-import { Search, Home, MapPin, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
+import Footer from '../../components/Footer';
+import { Search, Filter, Shirt, MapPin, ChevronDown, ChevronUp, SlidersHorizontal, ShoppingBag } from 'lucide-react';
 
-const Emlak = () => {
+const Giyim = () => {
     // Location States
     const [cities, setCities] = useState([]);
     const [districts, setDistricts] = useState([]);
@@ -15,13 +15,15 @@ const Emlak = () => {
     // Filter States
     const [category, setCategory] = useState('');
     const [subCategory, setSubCategory] = useState('');
-    const [roomCount, setRoomCount] = useState('');
+    const [size, setSize] = useState('');
+    const [color, setColor] = useState('');
     const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-    const [sizeRange, setSizeRange] = useState({ min: '', max: '' });
-    const [buildingAge, setBuildingAge] = useState('');
-    const [heating, setHeating] = useState('');
-    const [floor, setFloor] = useState('');
+    const [brand, setBrand] = useState('');
+    const [condition, setCondition] = useState('');
     const [keyword, setKeyword] = useState('');
+
+    // Filter Visibility State
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Applied Filters (Triggered by button)
     const [appliedFilters, setAppliedFilters] = useState({
@@ -30,12 +32,11 @@ const Emlak = () => {
         selectedNeighborhood: '',
         category: '',
         subCategory: '',
-        roomCount: '',
+        size: '',
+        color: '',
         priceRange: { min: '', max: '' },
-        sizeRange: { min: '', max: '' },
-        buildingAge: '',
-        heating: '',
-        floor: '',
+        brand: '',
+        condition: '',
         keyword: ''
     });
 
@@ -46,14 +47,14 @@ const Emlak = () => {
             selectedNeighborhood,
             category,
             subCategory,
-            roomCount,
+            size,
+            color,
             priceRange,
-            sizeRange,
-            buildingAge,
-            heating,
-            floor,
+            brand,
+            condition,
             keyword
         });
+        setShowMobileFilters(false);
     };
 
     useEffect(() => {
@@ -82,11 +83,7 @@ const Emlak = () => {
 
     const fetchCities = async () => {
         try {
-            const { data, error } = await supabase
-                .from('cities')
-                .select('*')
-                .order('name');
-
+            const { data, error } = await supabase.from('cities').select('*').order('name');
             if (error) throw error;
             setCities(data);
         } catch (error) {
@@ -96,12 +93,7 @@ const Emlak = () => {
 
     const fetchDistricts = async (cityId) => {
         try {
-            const { data, error } = await supabase
-                .from('districts')
-                .select('*')
-                .eq('city_id', cityId)
-                .order('name');
-
+            const { data, error } = await supabase.from('districts').select('*').eq('city_id', cityId).order('name');
             if (error) throw error;
             setDistricts(data);
         } catch (error) {
@@ -111,12 +103,7 @@ const Emlak = () => {
 
     const fetchNeighborhoods = async (districtId) => {
         try {
-            const { data, error } = await supabase
-                .from('neighborhoods')
-                .select('*')
-                .eq('district_id', districtId)
-                .order('name');
-
+            const { data, error } = await supabase.from('neighborhoods').select('*').eq('district_id', districtId).order('name');
             if (error) throw error;
             setNeighborhoods(data);
         } catch (error) {
@@ -125,23 +112,34 @@ const Emlak = () => {
     };
 
     const categories = [
-        { id: 'konut', name: 'Konut' },
-        { id: 'isyeri', name: 'İş Yeri' },
-        { id: 'arsa', name: 'Arsa' },
-        { id: 'devremulk', name: 'Devremülk' },
-        { id: 'turistik', name: 'Turistik Tesis' }
+        { id: 'kadin', name: 'Kadın' },
+        { id: 'erkek', name: 'Erkek' },
+        { id: 'cocuk', name: 'Çocuk' },
+        { id: 'bebek', name: 'Bebek' }
     ];
 
-    const subCategories = {
-        'konut': ['Daire', 'Residence', 'Müstakil Ev', 'Villa', 'Çiftlik Evi', 'Yalı', 'Yazlık'],
-        'isyeri': ['Dükkan & Mağaza', 'Ofis & Büro', 'Depo & Antrepo', 'Fabrika', 'Plaza Katı'],
-        'arsa': ['Satılık Arsa', 'Kiralık Arsa'],
-        // ... extend as needed
-    };
+    const subCategories = [
+        'Elbise', 'Tişört', 'Gömlek', 'Pantolon', 'Jean', 'Etek', 'Ceket', 'Mont & Kaban', 'Ayakkabı', 'Çanta', 'Aksesuar', 'Spor Giyim', 'İç Giyim'
+    ];
 
-    const roomCounts = ['1+0', '1+1', '2+0', '2+1', '2+2', '3+1', '3+2', '4+1', '4+2', '5+1', '5+2', '6+ A üzeri'];
-    const ages = ['0', '1', '2', '3', '4', '5-10', '11-15', '16-20', '21 ve üzeri'];
-    const heatings = ['Kombi (Doğalgaz)', 'Merkezi', 'Merkezi (Pay Ölçer)', 'Yerden Isıtma', 'Klima', 'Soba', 'Yok'];
+    const sizes = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Standart'];
+    const shoeSizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
+
+    const colors = [
+        { name: 'Siyah', code: '#000000' },
+        { name: 'Beyaz', code: '#FFFFFF', border: true },
+        { name: 'Kırmızı', code: '#EF4444' },
+        { name: 'Mavi', code: '#3B82F6' },
+        { name: 'Yeşil', code: '#10B981' },
+        { name: 'Sarı', code: '#F59E0B' },
+        { name: 'Lacivert', code: '#1E3A8A' },
+        { name: 'Gri', code: '#6B7280' },
+        { name: 'Bej', code: '#F5F5DC', border: true },
+        { name: 'Kahverengi', code: '#78350F' },
+        { name: 'Pembe', code: '#EC4899' },
+        { name: 'Mor', code: '#8B5CF6' },
+    ];
+
     // Data States
     const [listings, setListings] = useState([]);
     const [loadingListings, setLoadingListings] = useState(false);
@@ -154,12 +152,12 @@ const Emlak = () => {
     const fetchListings = async () => {
         setLoadingListings(true);
         try {
-            // 1. Base Query (sadece onaylı ilanlar)
+            // 1. Base Query
             let query = supabase
                 .from('listings')
                 .select('*')
                 .eq('status', 'approved')
-                .eq('category', 'emlak')
+                .eq('category', 'giyim')
                 .order('created_at', { ascending: false });
 
             // Apply Filters
@@ -174,11 +172,14 @@ const Emlak = () => {
             }
 
             // JSONB Filters
-            if (appliedFilters.roomCount) {
-                query = query.contains('details', { room: appliedFilters.roomCount });
+            if (appliedFilters.size) {
+                query = query.contains('details', { size: appliedFilters.size });
             }
-            if (appliedFilters.subCategory) {
-                query = query.contains('details', { type: appliedFilters.subCategory }); // Assuming type maps to subCategory
+            if (appliedFilters.color) {
+                query = query.contains('details', { color: appliedFilters.color });
+            }
+            if (appliedFilters.brand) {
+                query = query.contains('details', { brand: appliedFilters.brand });
             }
 
             const { data: listingsData, error: listingsError } = await query;
@@ -252,21 +253,27 @@ const Emlak = () => {
                 {/* Sidebar Filters */}
                 <aside className="w-full lg:w-72 flex-shrink-0">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                        <div
+                            className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between cursor-pointer lg:cursor-default"
+                            onClick={() => setShowMobileFilters(!showMobileFilters)}
+                        >
                             <div className="flex items-center gap-2 font-bold text-gray-800">
                                 <SlidersHorizontal size={20} className="text-blue-600" />
                                 <span>Detaylı Filtre</span>
                             </div>
+                            <div className="lg:hidden text-gray-500">
+                                {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </div>
                             <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     setCategory('');
                                     setSubCategory('');
-                                    setRoomCount('');
+                                    setSize('');
                                     setPriceRange({ min: '', max: '' });
-                                    setSizeRange({ min: '', max: '' });
-                                    setBuildingAge('');
-                                    setHeating('');
-                                    setFloor('');
+                                    setColor('');
+                                    setBrand('');
+                                    setCondition('');
                                     setKeyword('');
                                     setSelectedCity('');
                                     setSelectedDistrict('');
@@ -277,12 +284,11 @@ const Emlak = () => {
                                         selectedNeighborhood: '',
                                         category: '',
                                         subCategory: '',
-                                        roomCount: '',
+                                        size: '',
+                                        color: '',
                                         priceRange: { min: '', max: '' },
-                                        sizeRange: { min: '', max: '' },
-                                        buildingAge: '',
-                                        heating: '',
-                                        floor: '',
+                                        brand: '',
+                                        condition: '',
                                         keyword: ''
                                     });
                                 }}
@@ -292,8 +298,8 @@ const Emlak = () => {
                             </button>
                         </div>
 
-                        <div className="p-4">
-                            {/* Kelime ile Filtrele */}
+                        <div className={`p-4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
+                            {/* Keyword Search */}
                             <FilterSection title="Kelime ile Filtrele">
                                 <div className="relative">
                                     <input
@@ -342,29 +348,43 @@ const Emlak = () => {
                             </FilterSection>
 
                             {/* Category Drilldown */}
-                            <FilterSection title="Emlak Tipi">
+                            <FilterSection title="Kategori">
                                 <div className="space-y-2.5">
                                     <select
                                         value={category}
-                                        onChange={(e) => {
-                                            setCategory(e.target.value);
-                                            setSubCategory('');
-                                        }}
+                                        onChange={(e) => setCategory(e.target.value)}
                                         className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     >
-                                        <option value="">Kategori Seçin</option>
+                                        <option value="">Cinsiyet Seçin</option>
                                         {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
 
                                     <select
                                         value={subCategory}
                                         onChange={(e) => setSubCategory(e.target.value)}
-                                        disabled={!category || !subCategories[category]}
-                                        className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
+                                        className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     >
-                                        <option value="">Tip Seçin</option>
-                                        {category && subCategories[category] && subCategories[category].map(s => <option key={s} value={s}>{s}</option>)}
+                                        <option value="">Ürün Tipi Seçin</option>
+                                        {subCategories.map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
+                                </div>
+                            </FilterSection>
+
+                            {/* Size */}
+                            <FilterSection title="Beden">
+                                <div className="flex flex-wrap gap-2">
+                                    {(subCategory === 'Ayakkabı' ? shoeSizes : sizes).map(s => (
+                                        <button
+                                            key={s}
+                                            onClick={() => setSize(s === size ? '' : s)}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${size === s
+                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                : 'bg-white text-gray-700 border-gray-200 hover:border-blue-500 hover:text-blue-600'
+                                                }`}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
                                 </div>
                             </FilterSection>
 
@@ -388,92 +408,33 @@ const Emlak = () => {
                                 </div>
                             </FilterSection>
 
-                            {/* Size (m2) */}
-                            <FilterSection title="Metrekare (m²)">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="number"
-                                        placeholder="Min"
-                                        className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        value={sizeRange.min}
-                                        onChange={e => setSizeRange({ ...sizeRange, min: e.target.value })}
-                                    />
-                                    <input
-                                        type="number"
-                                        placeholder="Max"
-                                        className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        value={sizeRange.max}
-                                        onChange={e => setSizeRange({ ...sizeRange, max: e.target.value })}
-                                    />
-                                </div>
-                            </FilterSection>
-
-                            {/* Room Count */}
-                            <FilterSection title="Oda Sayısı">
-                                <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                                    {roomCounts.map(rc => (
-                                        <label key={rc} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                checked={roomCount === rc} // Example logic, normally multi-select
-                                                onChange={() => setRoomCount(rc)}
-                                            />
-                                            {rc}
-                                        </label>
+                            {/* Color */}
+                            <FilterSection title="Renk">
+                                <div className="flex flex-wrap gap-3">
+                                    {colors.map(c => (
+                                        <button
+                                            key={c.name}
+                                            onClick={() => setColor(c.name === color ? '' : c.name)}
+                                            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 flex items-center justify-center relative ${color === c.name ? 'ring-2 ring-offset-2 ring-blue-500' : ''
+                                                }`}
+                                            title={c.name}
+                                            style={{ backgroundColor: c.code, borderColor: c.border ? '#e5e7eb' : 'transparent' }}
+                                        >
+                                            {color === c.name && (
+                                                <div className={`w-2 h-2 rounded-full ${c.name === 'Beyaz' || c.name === 'Bej' ? 'bg-black' : 'bg-white'}`} />
+                                            )}
+                                        </button>
                                     ))}
                                 </div>
                             </FilterSection>
 
-                            {/* Building Age */}
-                            <FilterSection title="Bina Yaşı" isOpen={false}>
+                            {/* Condition */}
+                            <FilterSection title="Durum" isOpen={false}>
                                 <div className="space-y-2">
-                                    {ages.map(age => (
-                                        <label key={age} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                    {['Yeni Etiketli', 'Yeni Gibi', 'Az Kullanılmış', 'Kullanılmış'].map(cond => (
+                                        <label key={cond} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
                                             <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                            {age}
-                                        </label>
-                                    ))}
-                                </div>
-                            </FilterSection>
-
-                            {/* Floor */}
-                            <FilterSection title="Bulunduğu Kat" isOpen={false}>
-                                <select
-                                    className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={floor}
-                                    onChange={(e) => setFloor(e.target.value)}
-                                >
-                                    <option value="">Seçiniz</option>
-                                    <option value="Bahçe Katı">Bahçe Katı</option>
-                                    <option value="Giriş Katı">Giriş Katı</option>
-                                    <option value="Yüksek Giriş">Yüksek Giriş</option>
-                                    <option value="Müstakil">Müstakil</option>
-                                    {[...Array(30).keys()].map(i => <option key={i + 1} value={i + 1}>{i + 1}. Kat</option>)}
-                                    <option value="Kot 1">Kot 1</option>
-                                    <option value="Kot 2">Kot 2</option>
-                                </select>
-                            </FilterSection>
-
-                            {/* Heating */}
-                            <FilterSection title="Isıtma" isOpen={false}>
-                                <div className="space-y-2">
-                                    {heatings.map(h => (
-                                        <label key={h} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                            {h}
-                                        </label>
-                                    ))}
-                                </div>
-                            </FilterSection>
-
-                            {/* From Whom */}
-                            <FilterSection title="Kimden" isOpen={false}>
-                                <div className="space-y-2">
-                                    {['Sahibinden', 'Emlak Ofisinden', 'İnşaat Firmasından', 'Bankadan'].map(from => (
-                                        <label key={from} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                            {from}
+                                            {cond}
                                         </label>
                                     ))}
                                 </div>
@@ -496,7 +457,7 @@ const Emlak = () => {
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div>
                             <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                {appliedFilters.category ? categories.find(c => c.id === appliedFilters.category)?.name : 'Tüm Emlak İlanları'}
+                                {appliedFilters.category ? categories.find(c => c.id === appliedFilters.category)?.name : 'Tüm Giyim İlanları'}
                                 {subCategory && (
                                     <>
                                         <span className="text-gray-400">/</span>
@@ -540,9 +501,9 @@ const Emlak = () => {
                                                 <MapPin size={12} />
                                                 {listing.cities?.name} / {listing.districts?.name}
                                             </div>
-                                            {listing.details?.type && (
+                                            {listing.details?.size && (
                                                 <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                                    {listing.details.type}
+                                                    {listing.details.size}
                                                 </div>
                                             )}
                                         </div>
@@ -556,11 +517,11 @@ const Emlak = () => {
                                                 {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
                                             </div>
                                             <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                                                <span>{listing.details?.room}</span>
+                                                <span>{listing.details?.type}</span>
                                                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                <span>{listing.details?.size} m²</span>
+                                                <span>{listing.details?.color}</span>
                                                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                <span>{listing.details?.floor}</span>
+                                                <span>{listing.details?.brand}</span>
                                             </div>
                                             <div className="text-xs text-gray-400 text-right">
                                                 {new Date(listing.created_at).toLocaleDateString('tr-TR')}
@@ -573,7 +534,7 @@ const Emlak = () => {
                     ) : (
                         <div className="bg-white rounded-xl shadow-sm p-16 text-center border border-gray-200 min-h-[400px] flex flex-col items-center justify-center">
                             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-                                <Home className="w-10 h-10 text-blue-500" />
+                                <Shirt className="w-10 h-10 text-blue-500" />
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-2">İlan Bulunamadı</h3>
                             <p className="text-gray-500 max-w-md mx-auto mb-8">
@@ -583,26 +544,27 @@ const Emlak = () => {
                                 onClick={() => {
                                     setCategory('');
                                     setSubCategory('');
-                                    setRoomCount('');
+                                    setSize('');
                                     setPriceRange({ min: '', max: '' });
-                                    setSizeRange({ min: '', max: '' });
-                                    setBuildingAge('');
-                                    setHeating('');
-                                    setFloor('');
+                                    setColor('');
+                                    setBrand('');
+                                    setCondition('');
+                                    setKeyword('');
                                     setSelectedCity('');
                                     setSelectedDistrict('');
+                                    setSelectedNeighborhood('');
                                     setAppliedFilters({
                                         selectedCity: '',
                                         selectedDistrict: '',
                                         selectedNeighborhood: '',
                                         category: '',
                                         subCategory: '',
-                                        roomCount: '',
+                                        size: '',
+                                        color: '',
                                         priceRange: { min: '', max: '' },
-                                        sizeRange: { min: '', max: '' },
-                                        buildingAge: '',
-                                        heating: '',
-                                        floor: ''
+                                        brand: '',
+                                        condition: '',
+                                        keyword: ''
                                     });
                                 }}
                                 className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
@@ -615,7 +577,8 @@ const Emlak = () => {
             </div>
             <Footer />
         </div>
-    );
-}
 
-export default Emlak;
+    );
+};
+
+export default Giyim;

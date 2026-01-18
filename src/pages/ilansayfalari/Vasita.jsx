@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
-import Footer from '../components/Footer';
+import { supabase } from '../../supabaseClient';
+import Footer from '../../components/Footer';
 import { Search, Filter, Car, MapPin, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 
 const Vasita = () => {
@@ -44,6 +44,9 @@ const Vasita = () => {
     const [hasPhoto, setHasPhoto] = useState(false);
     const [hasVideo, setHasVideo] = useState(false);
     const [keyword, setKeyword] = useState('');
+
+    // Filter Visibility State
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     // Applied Filters (Triggered by button)
     const [appliedFilters, setAppliedFilters] = useState({
@@ -102,6 +105,7 @@ const Vasita = () => {
             hasVideo,
             keyword
         });
+        setShowMobileFilters(false); // Close mobile filters after applying
     };
 
     const [loading, setLoading] = useState(true);
@@ -391,73 +395,82 @@ const Vasita = () => {
                 {/* Sidebar Filters */}
                 <aside className="w-full lg:w-72 flex-shrink-0">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+                        <div
+                            className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between cursor-pointer lg:cursor-default"
+                            onClick={() => setShowMobileFilters(!showMobileFilters)}
+                        >
                             <div className="flex items-center gap-2 font-bold text-gray-800">
                                 <SlidersHorizontal size={20} className="text-blue-600" />
                                 <span>Detaylı Filtre</span>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setAppliedFilters({
-                                        selectedCity: '',
-                                        selectedDistrict: '',
-                                        selectedNeighborhood: '',
-                                        selectedMake: '',
-                                        selectedModel: '',
-                                        selectedPackage: '',
-                                        priceRange: { min: '', max: '' },
-                                        yearRange: { min: '', max: '' },
-                                        kmRange: { min: '', max: '' },
-                                        vehicleStatus: '',
-                                        gear: [],
-                                        fuel: [],
-                                        bodyType: [],
-                                        enginePower: { min: '', max: '' },
-                                        engineVolume: { min: '', max: '' },
-                                        traction: '',
-                                        color: [],
-                                        warranty: '',
-                                        heavyDamage: '',
-                                        plate: '',
-                                        fromWhom: [],
-                                        exchange: '',
-                                        hasPhoto: false,
-                                        hasVideo: false,
-                                        keyword: ''
-                                    });
-                                    // Reset local states too
-                                    setSelectedMake('');
-                                    setSelectedModel('');
-                                    setSelectedPackage('');
-                                    setPriceRange({ min: '', max: '' });
-                                    setYearRange({ min: '', max: '' });
-                                    setKmRange({ min: '', max: '' });
-                                    setSelectedCity('');
-                                    setSelectedDistrict('');
-                                    setVehicleStatus('');
-                                    setGear([]);
-                                    setFuel([]);
-                                    setBodyType([]);
-                                    setEnginePower({ min: '', max: '' });
-                                    setEngineVolume({ min: '', max: '' });
-                                    setTraction('');
-                                    setColor([]);
-                                    setWarranty('');
-                                    setHeavyDamage('');
-                                    setPlate('');
-                                    setFromWhom([]);
-                                    setExchange('');
-                                    setHasPhoto(false);
-                                    setHasVideo(false);
-                                    setKeyword('');
-                                }}
-                                className="text-xs text-blue-600 hover:underline font-medium"
-                            >
-                                Temizle
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setAppliedFilters({
+                                            selectedCity: '',
+                                            selectedDistrict: '',
+                                            selectedNeighborhood: '',
+                                            selectedMake: '',
+                                            selectedModel: '',
+                                            selectedPackage: '',
+                                            priceRange: { min: '', max: '' },
+                                            yearRange: { min: '', max: '' },
+                                            kmRange: { min: '', max: '' },
+                                            vehicleStatus: '',
+                                            gear: [],
+                                            fuel: [],
+                                            bodyType: [],
+                                            enginePower: { min: '', max: '' },
+                                            engineVolume: { min: '', max: '' },
+                                            traction: '',
+                                            color: [],
+                                            warranty: '',
+                                            heavyDamage: '',
+                                            plate: '',
+                                            fromWhom: [],
+                                            exchange: '',
+                                            hasPhoto: false,
+                                            hasVideo: false,
+                                            keyword: ''
+                                        });
+                                        // Reset local states too
+                                        setSelectedMake('');
+                                        setSelectedModel('');
+                                        setSelectedPackage('');
+                                        setPriceRange({ min: '', max: '' });
+                                        setYearRange({ min: '', max: '' });
+                                        setKmRange({ min: '', max: '' });
+                                        setSelectedCity('');
+                                        setSelectedDistrict('');
+                                        setVehicleStatus('');
+                                        setGear([]);
+                                        setFuel([]);
+                                        setBodyType([]);
+                                        setEnginePower({ min: '', max: '' });
+                                        setEngineVolume({ min: '', max: '' });
+                                        setTraction('');
+                                        setColor([]);
+                                        setWarranty('');
+                                        setHeavyDamage('');
+                                        setPlate('');
+                                        setFromWhom([]);
+                                        setExchange('');
+                                        setHasPhoto(false);
+                                        setHasVideo(false);
+                                        setKeyword('');
+                                    }}
+                                    className="text-xs text-blue-600 hover:underline font-medium"
+                                >
+                                    Temizle
+                                </button>
+                                <div className="lg:hidden text-gray-500">
+                                    {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="p-4">
+                        <div className={`p-4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
                             {/* Location (First, as requested by image usually top, but image shows after keywords?)
                                 Image shows: Keywords (at bottom actually), Location/Address at top usually or separate.
                                 The user's specific request "vasıta sayfasına bu filtreleri ekle" and image shows a list.
