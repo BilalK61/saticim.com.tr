@@ -98,6 +98,41 @@ const IlanEkle = () => {
         exchange: ''
     });
 
+    const [realEstateDetails, setRealEstateDetails] = useState({
+        type: '', // Daire, Villa, Arsa vs
+        room: '',
+        size: '', // m2
+        age: '',
+        floor: '', // Bulunduğu kat
+        totalFloors: '', // Kat Sayısı (optional but good)
+        heating: '',
+        bathroom: '',
+        furnished: false,
+        balcony: false,
+        fromSite: false,
+        zoning: '', // İmar Durumu for Arsa
+        credit: '',
+        swap: ''
+    });
+
+    // Electronics Specific States
+    const [phoneBrands, setPhoneBrands] = useState([]);
+    const [phoneModels, setPhoneModels] = useState([]);
+    const [phoneDetails, setPhoneDetails] = useState({
+        subCategory: '', // Cep Telefonu, Tablet, Bilgisayar, Diğer
+        brand: '',
+        model: '',
+        storage: '',
+        ram: '',
+        color: '',
+        warranty: '',
+        status: '',
+        screenSize: '',
+        camera: '',
+        battery: '',
+        releaseDate: ''
+    });
+
     const [loading, setLoading] = useState(false);
 
     // Form States
@@ -189,6 +224,35 @@ const IlanEkle = () => {
         setSelectedPackage('');
     }, [selectedModel]);
 
+    // Phone Data Fetch Logic
+    useEffect(() => {
+        if (selectedCategory === 'elektronik') {
+            fetchPhoneBrands();
+        }
+    }, [selectedCategory]);
+
+    useEffect(() => {
+        if (phoneDetails.brand) {
+            fetchPhoneModels(phoneDetails.brand);
+        } else {
+            setPhoneModels([]);
+        }
+        // Reset model when brand changes if model is not valid for new brand (handled by user selection usually but good to keep clean)
+        // Check if current model belongs to new brand? No, simplify: if brand changes, just update list. 
+        // User should re-select model if UI clears it or keep it if we don't clear. 
+        // Usually better to clear model if brand changes.
+        if (phoneDetails.brand && phoneModels.length > 0) {
+            // Optional: verify/reset model
+        }
+    }, [phoneDetails.brand, phoneDetails.subCategory]);
+
+    // Fetch full details when model changes
+    useEffect(() => {
+        if (phoneDetails.model) {
+            fetchModelDetails(phoneDetails.model);
+        }
+    }, [phoneDetails.model]);
+
     const fetchMakes = async () => {
         const { data } = await supabase.from('vehicle_makes').select('*').order('name');
         setMakes(data || []);
@@ -200,6 +264,54 @@ const IlanEkle = () => {
     const fetchPackages = async (modelId) => {
         const { data } = await supabase.from('vehicle_packages').select('*').eq('model_id', modelId).order('name');
         setPackages(data || []);
+    };
+
+    const fetchPhoneBrands = async () => {
+        try {
+            const { data, error } = await supabase.from('phone_brands').select('*').order('name');
+            if (error) throw error;
+            setPhoneBrands(data || []);
+        } catch (error) {
+            console.error('Telefon markaları çekilirken hata:', error.message);
+        }
+    };
+
+    const fetchPhoneModels = async (brandId) => {
+        try {
+            const { data, error } = await supabase.from('phone_models').select('*').eq('brand_id', brandId).order('name');
+            if (error) throw error;
+
+            // Filter based on selected subCategory
+            let filteredData = data || [];
+            if (phoneDetails.subCategory === 'Cep Telefonu') {
+                filteredData = filteredData.filter(m => !m.name.match(/iPad|Tab|Pad|Watch/i));
+            } else if (phoneDetails.subCategory === 'Tablet') {
+                filteredData = filteredData.filter(m => m.name.match(/iPad|Tab|Pad/i));
+            }
+
+            setPhoneModels(filteredData);
+        } catch (error) {
+            console.error('Telefon modelleri çekilirken hata:', error.message);
+        }
+    };
+
+    const fetchModelDetails = async (modelId) => {
+        try {
+            const { data, error } = await supabase.from('phone_models').select('*').eq('id', modelId).single();
+            if (error) throw error;
+
+            if (data) {
+                setPhoneDetails(prev => ({
+                    ...prev,
+                    screenSize: data.display_size || '',
+                    camera: data.camera_pixels || '',
+                    battery: data.battery_size || '',
+                    releaseDate: data.released_at || ''
+                }));
+            }
+        } catch (error) {
+            console.error('Model detayları çekilirken hata:', error.message);
+        }
     };
 
     const fetchCities = async () => {
@@ -293,6 +405,16 @@ const IlanEkle = () => {
                 if (data.details.package_id) setSelectedPackage(data.details.package_id);
             }
 
+            // Real Estate specific data
+            if (data.category === 'emlak' && data.details) {
+                setRealEstateDetails(data.details);
+            }
+
+            // Electronics specific data
+            if (data.category === 'elektronik' && data.details) {
+                setPhoneDetails(data.details);
+            }
+
             setLoadingData(false);
         } catch (error) {
             console.error('İlan yüklenirken hata:', error);
@@ -332,6 +454,10 @@ const IlanEkle = () => {
                     model_id: selectedModel,
                     package_id: selectedPackage,
                     ...vehicleDetails
+                } : selectedCategory === 'emlak' ? {
+                    ...realEstateDetails
+                } : selectedCategory === 'elektronik' ? {
+                    ...phoneDetails
                 } : {}
             };
 
@@ -692,6 +818,295 @@ const IlanEkle = () => {
                     </div>
                 )}
 
+
+                {selectedCategory === 'elektronik' && (
+                    <div className="bg-green-50 p-6 rounded-xl border border-green-100 space-y-6">
+                        <h3 className="font-semibold text-green-800 text-lg border-b border-green-200 pb-2">Elektronik Bilgileri</h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Alt Kategori</label>
+                                <select
+                                    value={phoneDetails.subCategory}
+                                    onChange={(e) => setPhoneDetails({ ...phoneDetails, subCategory: e.target.value })}
+                                    className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                >
+                                    <option value="">Seçiniz</option>
+                                    {['Cep Telefonu', 'Tablet', 'Bilgisayar', 'Diğer'].map(o => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {phoneDetails.subCategory === 'Cep Telefonu' && (
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Marka</label>
+                                        <select
+                                            value={phoneDetails.brand}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, brand: e.target.value, model: '' })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {phoneBrands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                                        <select
+                                            value={phoneDetails.model}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, model: e.target.value })}
+                                            disabled={!phoneDetails.brand}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none disabled:bg-gray-100"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {phoneModels.map(model => <option key={model.id} value={model.id}>{model.name}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Dahili Hafıza</label>
+                                        <select
+                                            value={phoneDetails.storage}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, storage: e.target.value })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {['16 GB', '32 GB', '64 GB', '128 GB', '256 GB', '512 GB', '1 TB', 'Diğer'].map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">RAM</label>
+                                        <select
+                                            value={phoneDetails.ram}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, ram: e.target.value })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {['2 GB', '3 GB', '4 GB', '6 GB', '8 GB', '12 GB', '16 GB', 'Diğer'].map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Garanti</label>
+                                        <select
+                                            value={phoneDetails.warranty}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, warranty: e.target.value })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {['Var', 'Yok'].map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Durumu</label>
+                                        <select
+                                            value={phoneDetails.status}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, status: e.target.value })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {['Sıfır', 'İkinci El', 'Yenilenmiş'].map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Auto-filled Specs */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4">
+                                    <div className="col-span-full mb-2 border-b border-gray-200 pb-1">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Teknik Özellikler (Otomatik)</span>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1">Ekran</label>
+                                        <input
+                                            type="text"
+                                            value={phoneDetails.screenSize}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, screenSize: e.target.value })}
+                                            className="w-full p-2 text-sm border border-gray-200 rounded-lg bg-white"
+                                            placeholder="Örn: 6.1 inç"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1">Kamera</label>
+                                        <input
+                                            type="text"
+                                            value={phoneDetails.camera}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, camera: e.target.value })}
+                                            className="w-full p-2 text-sm border border-gray-200 rounded-lg bg-white"
+                                            placeholder="Örn: 12 MP"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1">Pil</label>
+                                        <input
+                                            type="text"
+                                            value={phoneDetails.battery}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, battery: e.target.value })}
+                                            className="w-full p-2 text-sm border border-gray-200 rounded-lg bg-white"
+                                            placeholder="Örn: 3000 mAh"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-500 mb-1">Çıkış Yılı</label>
+                                        <input
+                                            type="text"
+                                            value={phoneDetails.releaseDate}
+                                            onChange={(e) => setPhoneDetails({ ...phoneDetails, releaseDate: e.target.value })}
+                                            className="w-full p-2 text-sm border border-gray-200 rounded-lg bg-white"
+                                            placeholder="Örn: 2021"
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        {phoneDetails.subCategory && phoneDetails.subCategory !== 'Cep Telefonu' && (
+                            <div className="text-sm text-gray-500 italic">
+                                Bu kategori için detaylı filtreler henüz eklenmedi. Başlık ve Açıklama kısmında detayları belirtebilirsiniz.
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {selectedCategory === 'emlak' && (
+                    <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 space-y-6">
+                        <h3 className="font-semibold text-orange-800 text-lg border-b border-orange-200 pb-2">Emlak Bilgileri</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Emlak Tipi</label>
+                                <select
+                                    value={realEstateDetails.type}
+                                    onChange={(e) => setRealEstateDetails({ ...realEstateDetails, type: e.target.value })}
+                                    className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                >
+                                    <option value="">Seçiniz</option>
+                                    {['Satılık Daire', 'Kiralık Daire', 'Satılık Arsa', 'Kiralık Arsa', 'İşyeri', 'Müstakil Ev', 'Villa', 'Çiftlik Evi', 'Yazlık', 'Bina', 'Devre Mülk', 'Turistik Tesis'].map(o => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Detail fields based on type */}
+                        {['Satılık Daire', 'Kiralık Daire', 'Müstakil Ev', 'Villa', 'Yazlık', 'Bina'].includes(realEstateDetails.type) && (
+                            <>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Oda Sayısı</label>
+                                        <select
+                                            value={realEstateDetails.roomCount}
+                                            onChange={(e) => setRealEstateDetails({ ...realEstateDetails, roomCount: e.target.value })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {['1+0', '1+1', '2+1', '3+1', '4+1', '5+1', '6+ Üzeri'].map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Bina Yaşı</label>
+                                        <select
+                                            value={realEstateDetails.buildingAge}
+                                            onChange={(e) => setRealEstateDetails({ ...realEstateDetails, buildingAge: e.target.value })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {['0 (Yeni)', '1-5', '6-10', '11-15', '16-20', '21+'].map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Isıtma</label>
+                                        <select
+                                            value={realEstateDetails.heating}
+                                            onChange={(e) => setRealEstateDetails({ ...realEstateDetails, heating: e.target.value })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {['Kombi (Doğalgaz)', 'Merkezi', 'Merkezi (Pay Ölçer)', 'Yerden Isıtma', 'Klima', 'Soba', 'Yok'].map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Banyo Sayısı</label>
+                                        <select
+                                            value={realEstateDetails.bathroom}
+                                            onChange={(e) => setRealEstateDetails({ ...realEstateDetails, bathroom: e.target.value })}
+                                            className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            {['1', '2', '3', '4', '5', '6+ Üzeri'].map(o => <option key={o} value={o}>{o}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                                        <input
+                                            type="checkbox"
+                                            checked={realEstateDetails.furnished}
+                                            onChange={(e) => setRealEstateDetails({ ...realEstateDetails, furnished: e.target.checked })}
+                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                        />
+                                        <span className="text-gray-700 font-medium">Eşyalı</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                                        <input
+                                            type="checkbox"
+                                            checked={realEstateDetails.balcony}
+                                            onChange={(e) => setRealEstateDetails({ ...realEstateDetails, balcony: e.target.checked })}
+                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                        />
+                                        <span className="text-gray-700 font-medium">Balkon</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                                        <input
+                                            type="checkbox"
+                                            checked={realEstateDetails.fromSite}
+                                            onChange={(e) => setRealEstateDetails({ ...realEstateDetails, fromSite: e.target.checked })}
+                                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                        />
+                                        <span className="text-gray-700 font-medium">Site İçerisinde</span>
+                                    </label>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Land Specific: Zoning */}
+                        {['Satılık Arsa', 'Kiralık Arsa', 'Bağ', 'Bahçe', 'Tarla', 'Zeytinlik'].includes(realEstateDetails.type) && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">İmar Durumu</label>
+                                <select
+                                    value={realEstateDetails.zoning}
+                                    onChange={(e) => setRealEstateDetails({ ...realEstateDetails, zoning: e.target.value })}
+                                    className="w-full p-3 border border-gray-200 rounded-xl outline-none"
+                                >
+                                    <option value="">Seçiniz</option>
+                                    {['Konut', 'Ticari', 'Bağ-Bahçe', 'Tarla', 'Sanayi', 'Zeytinlik', 'Sit Alanı', 'Diğer'].map(o => <option key={o} value={o}>{o}</option>)}
+                                </select>
+                            </div>
+                        )}
+
+                        {/* Common boolean options */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                                <input
+                                    type="checkbox"
+                                    checked={realEstateDetails.credit === 'true'} // assuming string 'true'/'false' or boolean, sticking to implementation plan state def
+                                    onChange={(e) => setRealEstateDetails({ ...realEstateDetails, credit: e.target.checked ? 'true' : '' })}
+                                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-gray-700 font-medium">Krediye Uygun</span>
+                            </label>
+                            <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                                <input
+                                    type="checkbox"
+                                    checked={realEstateDetails.swap === 'true'}
+                                    onChange={(e) => setRealEstateDetails({ ...realEstateDetails, swap: e.target.checked ? 'true' : '' })}
+                                    className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-gray-700 font-medium">Takaslı</span>
+                            </label>
+                        </div>
+
+                    </div>
+                )}
+
                 {/* Title */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">İlan Başlığı</label>
@@ -741,7 +1156,7 @@ const IlanEkle = () => {
                         onChange={e => setFormData({ ...formData, description: e.target.value })}
                     ></textarea>
                 </div>
-            </div>
+            </div >
 
             <div className="flex justify-end pt-4">
                 <button
@@ -753,7 +1168,7 @@ const IlanEkle = () => {
                     <ChevronRight size={18} />
                 </button>
             </div>
-        </div>
+        </div >
     );
 
     const renderStep3_Images = () => (

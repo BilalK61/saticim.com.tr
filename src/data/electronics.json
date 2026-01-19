@@ -1,0 +1,986 @@
+{
+    "categories": [
+        {
+            "id": "phones",
+            "name": "Telefon",
+            "brands": [
+                {
+                    "name": "Apple",
+                    "models": [
+                        "iPhone 16 Pro Max",
+                        "iPhone 16 Pro",
+                        "iPhone 16 Plus",
+                        "iPhone 16",
+                        "iPhone 15 Pro Max",
+                        "iPhone 15 Pro",
+                        "iPhone 15 Plus",
+                        "iPhone 15",
+                        "iPhone 14 Pro Max",
+                        "iPhone 14 Pro",
+                        "iPhone 14 Plus",
+                        "iPhone 14",
+                        "iPhone 13 Pro Max",
+                        "iPhone 13 Pro",
+                        "iPhone 13",
+                        "iPhone 13 mini",
+                        "iPhone 12 Pro Max",
+                        "iPhone 12",
+                        "iPhone 11",
+                        "iPhone SE (2022)"
+                    ]
+                },
+                {
+                    "name": "Samsung",
+                    "models": [
+                        "Galaxy S25 Ultra",
+                        "Galaxy S25+",
+                        "Galaxy S25",
+                        "Galaxy S24 Ultra",
+                        "Galaxy S24+",
+                        "Galaxy S24",
+                        "Galaxy S23 Ultra",
+                        "Galaxy S23+",
+                        "Galaxy S23",
+                        "Galaxy S23 FE",
+                        "Galaxy Z Fold 6",
+                        "Galaxy Z Flip 6",
+                        "Galaxy Z Fold 5",
+                        "Galaxy Z Flip 5",
+                        "Galaxy A55",
+                        "Galaxy A35",
+                        "Galaxy A25",
+                        "Galaxy A15",
+                        "Galaxy A54",
+                        "Galaxy A34",
+                        "Galaxy M55",
+                        "Galaxy M34",
+                        "Galaxy M15"
+                    ]
+                },
+                {
+                    "name": "Xiaomi",
+                    "models": [
+                        "Xiaomi 14 Ultra",
+                        "Xiaomi 14 Pro",
+                        "Xiaomi 14",
+                        "Xiaomi 13T Pro",
+                        "Xiaomi 13T",
+                        "Xiaomi 13 Ultra",
+                        "Xiaomi 13 Pro",
+                        "Xiaomi 13",
+                        "Redmi Note 13 Pro+",
+                        "Redmi Note 13 Pro",
+                        "Redmi Note 13",
+                        "Redmi Note 12 Pro+",
+                        "Redmi 13C",
+                        "Redmi 12",
+                        "POCO F6 Pro",
+                        "POCO F6",
+                        "POCO X6 Pro",
+                        "POCO X6",
+                        "POCO M6 Pro"
+                    ]
+                },
+                {
+                    "name": "Huawei",
+                    "models": [
+                        "Pura 70 Ultra",
+                        "Pura 70 Pro+",
+                        "Pura 70 Pro",
+                        "Pura 70",
+                        "Mate 60 Pro+",
+                        "Mate 60 Pro",
+                        "Mate 60",
+                        "P60 Pro",
+                        "Nova 12 SE",
+                        "Nova 12i",
+                        "Nova 12s",
+                        "Nova 11 Pro",
+                        "Mate X3",
+                        "Mate Xs 2"
+                    ]
+                },
+                {
+                    "name": "Google",
+                    "models": [
+                        "Pixel 9 Pro XL",
+                        "Pixel 9 Pro",
+                        "Pixel 9",
+                        "Pixel 8a",
+                        "Pixel 8 Pro",
+                        "Pixel 8",
+                        "Pixel 7a",
+                        "Pixel 7 Pro",
+                        "Pixel 7",
+                        "Pixel Fold"
+                    ]
+                },
+                {
+                    "name": "OnePlus",
+                    "models": [
+                        "OnePlus 12",
+                        "OnePlus 12R",
+                        "OnePlus Open",
+                        "OnePlus 11",
+                        "OnePlus Nord 4",
+                        "OnePlus Nord CE 4"
+                    ]
+                },
+                {
+                    "name": "Honor",
+                    "models": [
+                        "Magic 6 Pro",
+                        "Magic 6 RSR",
+                        "Magic V3",
+                        "Magic V2",
+                        "Honor 200 Pro",
+                        "Honor 200",
+                        "Honor 90",
+                        "Honor X9b"
+                    ]
+                },
+                {
+                    "name": "Oppo",
+                    "models": [
+                        "Find X7 Ultra",
+                        "Find X7",
+                        "Find N3",
+                        "Find N3 Flip",
+                        "Reno 11 Pro",
+                        "Reno 11",
+                        "Reno 10 Pro+"
+                    ]
+                },
+                {
+                    "name": "Vivo",
+                    "models": [
+                        "X100 Ultra",
+                        "X100 Pro",
+                        "X100",
+                        "X Fold 3 Pro",
+                        "V30 Pro",
+                        "V30",
+                        "Y200",
+                        "Y100"
+                    ]
+                },
+                {
+                    "name": "Realme",
+                    "models": [
+                        "GT 6",
+                        "GT 6T",
+                        "12 Pro+",
+                        "12 Pro",
+                        "12+ 5G",
+                        "12x",
+                        "C67",
+                        "C65",
+                        "C55"
+                    ]
+                },
+                {
+                    "name": "Motorola",
+                    "models": [
+                        "Razr 50 Ultra",
+                        "Razr 50",
+                        "Edge 50 Ultra",
+                        "Edge 50 Pro",
+                        "Edge 50 Fusion",
+                        "Moto G85",
+                        "Moto G84",
+                        "Moto G54"
+                    ]
+                },
+                {
+                    "name": "Tecno",
+                    "models": [
+                        "Phantom V Fold",
+                        "Phantom V Flip",
+                        "Camon 30 Premier",
+                        "Camon 30 Pro",
+                        "Camon 30",
+                        "Pova 6 Pro",
+                        "Spark 20 Pro+"
+                    ]
+                },
+                {
+                    "name": "Infinix",
+                    "models": [
+                        "GT 20 Pro",
+                        "Note 40 Pro+",
+                        "Note 40 Pro",
+                        "Zero 30 5G",
+                        "Hot 40 Pro"
+                    ]
+                },
+                {
+                    "name": "Nothing",
+                    "models": [
+                        "Phone (2a)",
+                        "Phone (2)",
+                        "Phone (1)",
+                        "CMF Phone 1"
+                    ]
+                },
+                {
+                    "name": "Reeder",
+                    "models": [
+                        "S19 Max Pro",
+                        "S19 Max",
+                        "P13 Blue Max",
+                        "S23 Pro Max"
+                    ]
+                },
+                {
+                    "name": "General Mobile",
+                    "models": [
+                        "GM 24 Pro",
+                        "GM 23 SE",
+                        "GM 23",
+                        "GM 22 Pro"
+                    ]
+                },
+                {
+                    "name": "Casper",
+                    "models": [
+                        "VIA X30 Plus",
+                        "VIA X30",
+                        "VIA F30",
+                        "VIA M30 Plus"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "tablets",
+            "name": "Tablet",
+            "brands": [
+                {
+                    "name": "Apple",
+                    "models": [
+                        "iPad Pro M4 (13 inch)",
+                        "iPad Pro M4 (11 inch)",
+                        "iPad Pro M2 (12.9 inch)",
+                        "iPad Pro M2 (11 inch)",
+                        "iPad Air M2 (13 inch)",
+                        "iPad Air M2 (11 inch)",
+                        "iPad Air (5. Nesil)",
+                        "iPad (10. nesil)",
+                        "iPad (9. nesil)",
+                        "iPad mini (A17 Pro)",
+                        "iPad mini (6. Nesil)"
+                    ]
+                },
+                {
+                    "name": "Samsung",
+                    "models": [
+                        "Galaxy Tab S10 Ultra",
+                        "Galaxy Tab S10+",
+                        "Galaxy Tab S9 Ultra",
+                        "Galaxy Tab S9+",
+                        "Galaxy Tab S9",
+                        "Galaxy Tab S9 FE+",
+                        "Galaxy Tab S9 FE",
+                        "Galaxy Tab A9+",
+                        "Galaxy Tab A9",
+                        "Galaxy Tab Active5"
+                    ]
+                },
+                {
+                    "name": "Huawei",
+                    "models": [
+                        "MatePad Pro 13.2",
+                        "MatePad Pro 11",
+                        "MatePad 11.5 S",
+                        "MatePad 11.5",
+                        "MatePad Air",
+                        "MatePad SE 11"
+                    ]
+                },
+                {
+                    "name": "Lenovo",
+                    "models": [
+                        "Tab P12",
+                        "Tab P11 Pro (2. Nesil)",
+                        "Tab P11 (2. Nesil)",
+                        "Tab M11",
+                        "Tab M10 Plus (3. Nesil)",
+                        "Legion Tab Y700"
+                    ]
+                },
+                {
+                    "name": "Xiaomi",
+                    "models": [
+                        "Pad 6S Pro 12.4",
+                        "Pad 6",
+                        "Pad 5",
+                        "Redmi Pad Pro",
+                        "Redmi Pad SE"
+                    ]
+                },
+                {
+                    "name": "Honor",
+                    "models": [
+                        "Pad 9",
+                        "Pad X9",
+                        "Pad 8"
+                    ]
+                },
+                {
+                    "name": "TCL",
+                    "models": [
+                        "Nxtpaper 11",
+                        "Tab 11",
+                        "Tab 10 Gen 2"
+                    ]
+                },
+                {
+                    "name": "Casper",
+                    "models": [
+                        "VIA L40",
+                        "VIA S48",
+                        "VIA S30"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "computers",
+            "name": "Bilgisayar",
+            "brands": [
+                {
+                    "name": "Apple",
+                    "models": [
+                        "MacBook Pro 16 (M4 Max)",
+                        "MacBook Pro 16 (M4 Pro)",
+                        "MacBook Pro 14 (M4 Max)",
+                        "MacBook Pro 14 (M4 Pro)",
+                        "MacBook Pro 14 (M4)",
+                        "MacBook Air 15 (M3)",
+                        "MacBook Air 13 (M3)",
+                        "MacBook Air 15 (M2)",
+                        "MacBook Air 13 (M2)",
+                        "iMac 24 (M4)",
+                        "iMac 24 (M3)",
+                        "Mac mini (M4 Pro)",
+                        "Mac mini (M4)",
+                        "Mac Studio (M2 Ultra)",
+                        "Mac Pro (M2 Ultra)"
+                    ]
+                },
+                {
+                    "name": "Lenovo",
+                    "models": [
+                        "ThinkPad X1 Carbon Gen 12",
+                        "ThinkPad X1 Yoga Gen 8",
+                        "ThinkPad T14s Gen 5",
+                        "ThinkPad E16 Gen 1",
+                        "Yoga 9i 2-in-1",
+                        "Yoga Slim 7i",
+                        "Legion 9i",
+                        "Legion Pro 7i Gen 9",
+                        "Legion Slim 7i",
+                        "LOQ 15",
+                        "IdeaPad Slim 5i",
+                        "IdeaPad Flex 5"
+                    ]
+                },
+                {
+                    "name": "Asus",
+                    "models": [
+                        "ROG Zephyrus G14 (2024)",
+                        "ROG Zephyrus G16 (2024)",
+                        "ROG Strix SCAR 18",
+                        "ROG Strix SCAR 16",
+                        "ROG Flow X16",
+                        "TUF Gaming A15",
+                        "TUF Gaming F15",
+                        "Zenbook Duo (2024)",
+                        "Zenbook 14 OLED",
+                        "Zenbook S 13 OLED",
+                        "Vivobook S 15",
+                        "Vivobook Pro 15 OLED",
+                        "ProArt Studiobook 16"
+                    ]
+                },
+                {
+                    "name": "Dell",
+                    "models": [
+                        "XPS 16 (2024)",
+                        "XPS 14 (2024)",
+                        "XPS 13 (2024)",
+                        "XPS 15 (9530)",
+                        "Alienware m18 R2",
+                        "Alienware m16 R2",
+                        "Alienware x16 R2",
+                        "G16 Gaming",
+                        "G15 Gaming",
+                        "Inspiron 16 Plus",
+                        "Inspiron 14 2-in-1",
+                        "Latitude 7450"
+                    ]
+                },
+                {
+                    "name": "HP",
+                    "models": [
+                        "Spectre x360 16",
+                        "Spectre x360 14",
+                        "Envy x360 16",
+                        "Envy 17",
+                        "OMEN Transcend 14",
+                        "OMEN Transcend 16",
+                        "OMEN 16",
+                        "Victus 16",
+                        "Victus 15",
+                        "Pavilion Plus 14",
+                        "Pavilion 15"
+                    ]
+                },
+                {
+                    "name": "MSI",
+                    "models": [
+                        "Titan 18 HX",
+                        "Raider GE78 HX",
+                        "Vector GP78 HX",
+                        "Stealth 16 AI Studio",
+                        "Stealth 14 Studio",
+                        "Pulse 17 AI",
+                        "Katana 15 AI",
+                        "Cyborg 15 AI",
+                        "Prestige 16 AI Studio",
+                        "Modern 15"
+                    ]
+                },
+                {
+                    "name": "Acer",
+                    "models": [
+                        "Predator Helios 18",
+                        "Predator Helios 16",
+                        "Predator Triton 14",
+                        "Nitro 17",
+                        "Nitro 16",
+                        "Swift Go 14",
+                        "Swift X 14",
+                        "Swift Edge 16",
+                        "Aspire 5",
+                        "Aspire 3"
+                    ]
+                },
+                {
+                    "name": "Monster",
+                    "models": [
+                        "Semruk S7 V9",
+                        "Tulpar T7 V21",
+                        "Tulpar T7 V20",
+                        "Tulpar T5 V23",
+                        "Abra A7 V14",
+                        "Abra A5 V21",
+                        "Abra A5 V20",
+                        "Huma H5 V4",
+                        "Huma H4 V5"
+                    ]
+                },
+                {
+                    "name": "Casper",
+                    "models": [
+                        "Excalibur G911",
+                        "Excalibur G870",
+                        "Excalibur G770",
+                        "Excalibur G900",
+                        "Nirvana X700",
+                        "Nirvana C550",
+                        "Nirvana C350"
+                    ]
+                },
+                {
+                    "name": "Razer",
+                    "models": [
+                        "Blade 18",
+                        "Blade 16",
+                        "Blade 14"
+                    ]
+                },
+                {
+                    "name": "Microsoft",
+                    "models": [
+                        "Surface Laptop 7",
+                        "Surface Laptop Studio 2",
+                        "Surface Pro 11",
+                        "Surface Pro 9",
+                        "Surface Go 4"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "tvs",
+            "name": "Televizyon",
+            "brands": [
+                {
+                    "name": "Samsung",
+                    "models": [
+                        "S95D OLED 4K",
+                        "S90D OLED 4K",
+                        "QN900D Neo QLED 8K",
+                        "QN800D Neo QLED 8K",
+                        "QN95D Neo QLED 4K",
+                        "QN90D Neo QLED 4K",
+                        "QN85D Neo QLED 4K",
+                        "Q80D QLED 4K",
+                        "Q70D QLED 4K",
+                        "Q60D QLED 4K",
+                        "The Frame (LS03D)",
+                        "The Serif",
+                        "The Sero",
+                        "DU8000 Crystal UHD",
+                        "DU7000 Crystal UHD"
+                    ]
+                },
+                {
+                    "name": "LG",
+                    "models": [
+                        "G4 OLED evo",
+                        "M4 Wireless OLED",
+                        "C4 OLED evo",
+                        "B4 OLED",
+                        "QNED99T 8K",
+                        "QNED91T",
+                        "QNED86T",
+                        "QNED80T",
+                        "UR9000",
+                        "UR8000"
+                    ]
+                },
+                {
+                    "name": "Sony",
+                    "models": [
+                        "Bravia 9 (XR90 - Mini LED)",
+                        "Bravia 8 (XR80 - OLED)",
+                        "Bravia 7 (XR70 - Mini LED)",
+                        "Bravia 3 (S30 - LED)",
+                        "A95L QD-OLED",
+                        "A80L OLED",
+                        "X95L Mini LED",
+                        "X90L Full Array LED",
+                        "X85L Full Array LED"
+                    ]
+                },
+                {
+                    "name": "Philips",
+                    "models": [
+                        "OLED+959",
+                        "OLED+908",
+                        "OLED809",
+                        "OLED708",
+                        "The Xtra (MiniLED PML9009)",
+                        "The One (PUS8909)",
+                        "The One (PUS8808)"
+                    ]
+                },
+                {
+                    "name": "TCL",
+                    "models": [
+                        "X955 Max (QD-Mini LED)",
+                        "C955 (QD-Mini LED)",
+                        "C855 (QD-Mini LED)",
+                        "C845 (Mini LED)",
+                        "C755 (QD-Mini LED)",
+                        "C745 (QLED)",
+                        "C655 (QLED)",
+                        "C645 (QLED)",
+                        "P755",
+                        "P745"
+                    ]
+                },
+                {
+                    "name": "Vestel",
+                    "models": [
+                        "OLED 9900",
+                        "QLED 9900",
+                        "Q9900",
+                        "UA9090",
+                        "U9700",
+                        "U9600",
+                        "U9500",
+                        "U9400"
+                    ]
+                },
+                {
+                    "name": "Hisense",
+                    "models": [
+                        "UX (Mini-LED X)",
+                        "U8N (Mini-LED)",
+                        "U7N (Mini-LED)",
+                        "U6N (Mini-LED)",
+                        "E7N Pro",
+                        "A7N"
+                    ]
+                },
+                {
+                    "name": "Arçelik",
+                    "models": [
+                        "Imperium 9 Series OLED",
+                        "Imperium 8 Series Mini LED",
+                        "Imperium 6 Series UHD",
+                        "Ultra 5 Series UHD"
+                    ]
+                },
+                {
+                    "name": "Beko",
+                    "models": [
+                        "Crystal Pro B55 OLED",
+                        "Crystal Pro B50 Mini LED",
+                        "Crystal Pro B40 UHD",
+                        "Crystal B30 UHD"
+                    ]
+                },
+                {
+                    "name": "Grundig",
+                    "models": [
+                        "OLED GH 9500",
+                        "Mini LED GH 9000",
+                        "QLED GH 8500",
+                        "Vision 9+",
+                        "Vision 8+"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "consoles",
+            "name": "Oyun Konsolu",
+            "brands": [
+                {
+                    "name": "Sony",
+                    "models": [
+                        "PlayStation 5 Pro",
+                        "PlayStation 5 Slim (Diskli)",
+                        "PlayStation 5 Slim (Dijital)",
+                        "PlayStation 5 (Standart)",
+                        "PlayStation 5 (Dijital)",
+                        "PlayStation 4 Pro",
+                        "PlayStation 4 Slim",
+                        "PlayStation Portal"
+                    ]
+                },
+                {
+                    "name": "Microsoft",
+                    "models": [
+                        "Xbox Series X (2024 - 2TB)",
+                        "Xbox Series X (Dijital)",
+                        "Xbox Series X",
+                        "Xbox Series S (1TB)",
+                        "Xbox Series S",
+                        "Xbox One X",
+                        "Xbox One S"
+                    ]
+                },
+                {
+                    "name": "Nintendo",
+                    "models": [
+                        "Nintendo Switch OLED",
+                        "Nintendo Switch (V2)",
+                        "Nintendo Switch Lite",
+                        "Nintendo Switch"
+                    ]
+                },
+                {
+                    "name": "Valve",
+                    "models": [
+                        "Steam Deck OLED 1TB",
+                        "Steam Deck OLED 512GB",
+                        "Steam Deck LCD"
+                    ]
+                },
+                {
+                    "name": "Asus",
+                    "models": [
+                        "ROG Ally X",
+                        "ROG Ally (Z1 Extreme)",
+                        "ROG Ally (Z1)"
+                    ]
+                },
+                {
+                    "name": "Lenovo",
+                    "models": [
+                        "Legion Go"
+                    ]
+                },
+                {
+                    "name": "MSI",
+                    "models": [
+                        "Claw A1M"
+                    ]
+                },
+                {
+                    "name": "Logitech",
+                    "models": [
+                        "G Cloud Gaming Handheld"
+                    ]
+                },
+                {
+                    "name": "Ayaneo",
+                    "models": [
+                        "Ayaneo Kun",
+                        "Ayaneo Slide",
+                        "Ayaneo Air 1S"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "cameras",
+            "name": "Kamera & Fotoğraf",
+            "brands": [
+                {
+                    "name": "Canon",
+                    "models": [
+                        "EOS R1",
+                        "EOS R3",
+                        "EOS R5 Mark II",
+                        "EOS R5",
+                        "EOS R6 Mark II",
+                        "EOS R6",
+                        "EOS R8",
+                        "EOS R7",
+                        "EOS R10",
+                        "EOS R50",
+                        "EOS R100",
+                        "EOS 5D Mark IV",
+                        "EOS 6D Mark II",
+                        "EOS 90D",
+                        "PowerShot V10"
+                    ]
+                },
+                {
+                    "name": "Sony",
+                    "models": [
+                        "Alpha 1",
+                        "Alpha 9 III",
+                        "Alpha 9 II",
+                        "Alpha 7R V",
+                        "Alpha 7R IV",
+                        "Alpha 7S III",
+                        "Alpha 7 IV",
+                        "Alpha 7 III",
+                        "Alpha 7C II",
+                        "Alpha 7CR",
+                        "ZV-E1",
+                        "ZV-E10 II",
+                        "ZV-E10",
+                        "ZV-1 II",
+                        "FX3",
+                        "FX30"
+                    ]
+                },
+                {
+                    "name": "Nikon",
+                    "models": [
+                        "Z9",
+                        "Z8",
+                        "Z7 II",
+                        "Z6 III",
+                        "Z6 II",
+                        "Z5",
+                        "Z f",
+                        "Z fc",
+                        "Z50",
+                        "Z30",
+                        "D850",
+                        "D780",
+                        "D7500"
+                    ]
+                },
+                {
+                    "name": "Fujifilm",
+                    "models": [
+                        "GFX100 II",
+                        "GFX100S II",
+                        "GFX50S II",
+                        "X-H2S",
+                        "X-H2",
+                        "X-T5",
+                        "X-T50",
+                        "X-S20",
+                        "X100VI",
+                        "X100V",
+                        "Instax Mini 12",
+                        "Instax Mini Evo"
+                    ]
+                },
+                {
+                    "name": "DJI",
+                    "models": [
+                        "Mavic 3 Pro",
+                        "Mavic 3 Classic",
+                        "Air 3",
+                        "Mini 4 Pro",
+                        "Mini 3 Pro",
+                        "Mini 2 SE",
+                        "Avata 2",
+                        "Osmo Pocket 3",
+                        "Osmo Action 4"
+                    ]
+                },
+                {
+                    "name": "GoPro",
+                    "models": [
+                        "HERO13 Black",
+                        "HERO12 Black",
+                        "HERO11 Black",
+                        "HERO11 Black Mini",
+                        "MAX"
+                    ]
+                },
+                {
+                    "name": "Panasonic",
+                    "models": [
+                        "Lumix S5IIX",
+                        "Lumix S5II",
+                        "Lumix GH7",
+                        "Lumix GH6",
+                        "Lumix G9 II"
+                    ]
+                },
+                {
+                    "name": "OM System (Olympus)",
+                    "models": [
+                        "OM-1 Mark II",
+                        "OM-1",
+                        "OM-5",
+                        "PEN E-P7"
+                    ]
+                },
+                {
+                    "name": "Leica",
+                    "models": [
+                        "M11-P",
+                        "M11",
+                        "Q3",
+                        "SL3",
+                        "SL2-S"
+                    ]
+                },
+                {
+                    "name": "Insta360",
+                    "models": [
+                        "X4",
+                        "X3",
+                        "One RS",
+                        "Ace Pro",
+                        "Go 3"
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "wearables",
+            "name": "Giyilebilir Teknoloji",
+            "brands": [
+                {
+                    "name": "Apple",
+                    "models": [
+                        "Apple Watch Ultra 2",
+                        "Apple Watch Ultra",
+                        "Apple Watch Series 10",
+                        "Apple Watch Series 9",
+                        "Apple Watch Series 8",
+                        "Apple Watch SE (2. Nesil)",
+                        "AirPods Max",
+                        "AirPods Pro (2. Nesil)",
+                        "AirPods 4",
+                        "AirPods 3"
+                    ]
+                },
+                {
+                    "name": "Samsung",
+                    "models": [
+                        "Galaxy Watch Ultra",
+                        "Galaxy Watch 7",
+                        "Galaxy Watch 6 Classic",
+                        "Galaxy Watch 6",
+                        "Galaxy Watch 5 Pro",
+                        "Galaxy Buds3 Pro",
+                        "Galaxy Buds3",
+                        "Galaxy Buds2 Pro",
+                        "Galaxy Ring"
+                    ]
+                },
+                {
+                    "name": "Huawei",
+                    "models": [
+                        "Watch Ultimate Design",
+                        "Watch Ultimate",
+                        "Watch 4 Pro",
+                        "Watch 4",
+                        "Watch GT 5 Pro",
+                        "Watch GT 5",
+                        "Watch GT 4",
+                        "Watch Fit 3",
+                        "FreeBuds Pro 3",
+                        "FreeClip"
+                    ]
+                },
+                {
+                    "name": "Xiaomi",
+                    "models": [
+                        "Watch S3",
+                        "Watch 2 Pro",
+                        "Watch 2",
+                        "Smart Band 9",
+                        "Smart Band 8 Pro",
+                        "Smart Band 8",
+                        "Buds 5",
+                        "Buds 4 Pro"
+                    ]
+                },
+                {
+                    "name": "Garmin",
+                    "models": [
+                        "Fenix 7 Pro",
+                        "Epix Pro (Gen 2)",
+                        "Forerunner 965",
+                        "Forerunner 265",
+                        "Venu 3",
+                        "Instinct 2X Solar",
+                        "Lily 2"
+                    ]
+                },
+                {
+                    "name": "Sony",
+                    "models": [
+                        "WH-1000XM5",
+                        "WH-1000XM4",
+                        "WF-1000XM5",
+                        "LinkBuds S"
+                    ]
+                },
+                {
+                    "name": "Bose",
+                    "models": [
+                        "QuietComfort Ultra Headphones",
+                        "QuietComfort Ultra Earbuds",
+                        "QuietComfort Headphones"
+                    ]
+                },
+                {
+                    "name": "Sennheiser",
+                    "models": [
+                        "Momentum 4 Wireless",
+                        "Momentum True Wireless 4",
+                        "Accentum Plus"
+                    ]
+                },
+                {
+                    "name": "JBL",
+                    "models": [
+                        "Tour One M2",
+                        "Tour Pro 2",
+                        "Live 770NC",
+                        "Tune 770NC"
+                    ]
+                }
+            ]
+        }
+    ]
+}

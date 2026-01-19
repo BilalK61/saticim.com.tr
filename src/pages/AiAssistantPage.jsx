@@ -1,49 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+// GoogleGenerativeAI import removed
+
 import { Send, Loader2, Bot, Plus, MessageSquare, Trash2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
 const bilaiLogo = "https://ecbhhbyfocitafbfsegg.supabase.co/storage/v1/object/public/logos/logokucuk.png";
 
-// --- MOCK VERİTABANI VE FONKSİYONLAR ---
-const MOCK_ILANLAR = [
-    { id: 1, baslik: "iPhone 13 128GB Temiz", fiyat: 25000, kategori: "Elektronik", sehir: "İstanbul" },
-    { id: 2, baslik: "Samsung S23 Ultra", fiyat: 45000, kategori: "Elektronik", sehir: "Ankara" },
-    { id: 3, baslik: "Satılık 2020 Fiat Egea", fiyat: 600000, kategori: "Vasıta", sehir: "Bursa" },
-    { id: 4, baslik: "Honda Civic 2022 Hatasız", fiyat: 1100000, kategori: "Vasıta", sehir: "İstanbul" },
-    { id: 5, baslik: "Kadıköy'de 2+1 Kiralık Daire", fiyat: 25000, kategori: "Emlak", sehir: "İstanbul" },
-    { id: 6, baslik: "PlayStation 5 Çift Kol", fiyat: 18000, kategori: "Elektronik", sehir: "İzmir" },
-];
+// --- MOCK VERİTABANI VE FONKSİYONLAR KALDIRILDI (Backend'e taşındı) ---
 
-const urunleriGetir = ({ kategori, maxFiyat, sehir, kelime }) => {
-    let sonuclar = MOCK_ILANLAR;
-    if (kategori) sonuclar = sonuclar.filter(u => u.kategori.toLowerCase().includes(kategori.toLowerCase()));
-    if (sehir) sonuclar = sonuclar.filter(u => u.sehir.toLowerCase().includes(sehir.toLowerCase()));
-    if (maxFiyat) sonuclar = sonuclar.filter(u => u.fiyat <= maxFiyat);
-    if (kelime) sonuclar = sonuclar.filter(u => u.baslik.toLowerCase().includes(kelime.toLowerCase()));
-    return sonuclar;
-};
-
-const toolsConfig = [
-    {
-        functionDeclarations: [
-            {
-                name: "urunleriGetir",
-                description: "Kullanıcının kriterlerine göre veritabanındaki ilanları arar ve listeler.",
-                parameters: {
-                    type: "object",
-                    properties: {
-                        kategori: { type: "string", description: "Aranan ürün kategorisi (örn: Elektronik, Vasıta, Emlak)" },
-                        maxFiyat: { type: "number", description: "Maksimum fiyat limiti" },
-                        sehir: { type: "string", description: "İlanın bulunduğu şehir" },
-                        kelime: { type: "string", description: "Ürün adı veya markası (örn: iPhone, BMW)" }
-                    },
-                },
-            },
-        ],
-    },
-];
 
 const AiAssistantPage = () => {
     const { user } = useAuth();
@@ -57,6 +22,10 @@ const AiAssistantPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [chatHistory, setChatHistory] = useState([]);
     const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        console.log("AiAssistantPage Component Mounted - Version: Edge Function Impl (v2)");
+    }, []);
 
     // Intro animasyonunu 2.5 saniye sonra kapat
     useEffect(() => {
@@ -191,44 +160,39 @@ const AiAssistantPage = () => {
         setIsLoading(true);
 
         try {
-            const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({
-                model: "gemini-1.5-flash",
-                tools: toolsConfig,
-                systemInstruction: "Sen bilAI asistanısın. Kullanıcı bir ürün aradığında MUTLAKA 'urunleriGetir' fonksiyonunu kullan. Türkçe konuş."
-            });
+            console.log("Sending to Edge Function:", { message: userMessage, history: chatHistory });
 
-            const chat = model.startChat({
-                history: [
-                    { role: "user", parts: [{ text: "Sen bilAI asistanısın. Kullanıcı ürün aradığında 'urunleriGetir' fonksiyonunu kullan." }] },
-                    { role: "model", parts: [{ text: "Anlaşıldı." }] },
-                    ...chatHistory
-                ],
-            });
-
-            const result = await chat.sendMessage(userMessage);
-            const response = await result.response;
-            const functionCalls = response.functionCalls();
-
-            let finalMessages;
-            if (functionCalls && functionCalls.length > 0) {
-                const call = functionCalls[0];
-                if (call.name === "urunleriGetir") {
-                    const apiResponse = urunleriGetir(call.args);
-                    const result2 = await chat.sendMessage([{
-                        functionResponse: { name: "urunleriGetir", response: { name: "urunleriGetir", content: apiResponse } }
-                    }]);
-                    const text2 = result2.response.text();
-                    finalMessages = [...newMessages, { role: 'model', text: text2 }];
-                    setMessages(finalMessages);
-                    setChatHistory(prev => [...prev, { role: "user", parts: [{ text: userMessage }] }, { role: "model", parts: [{ text: text2 }] }]);
+            const { data, error } = await supabase.functions.invoke('bilai-chat', {
+                body: {
+                    message: userMessage,
+                    history: chatHistory
                 }
-            } else {
-                const text = response.text();
-                finalMessages = [...newMessages, { role: 'model', text: text }];
-                setMessages(finalMessages);
-                setChatHistory(prev => [...prev, { role: "user", parts: [{ text: userMessage }] }, { role: "model", parts: [{ text: text }] }]);
+            });
+
+            if (error) {
+                console.error("Edge Function Error:", error);
+                // Attempt to read the error body if available
+                if (error.context && error.context.json) {
+                    error.context.json().then(errBody => {
+                        console.error("Edge Function Error Details:", errBody);
+                    }).catch(e => console.error("Could not parse error body:", e));
+                }
+                throw error;
             }
+
+            console.log("Edge Function Response:", data);
+
+            const botResponseText = data.text || "Üzgünüm, şu an yanıt veremiyorum.";
+
+            const finalMessages = [...newMessages, { role: 'model', text: botResponseText }];
+            setMessages(finalMessages);
+
+            // Update chat history for next turn
+            setChatHistory(prev => [
+                ...prev,
+                { role: "user", parts: [{ text: userMessage }] },
+                { role: "model", parts: [{ text: botResponseText }] }
+            ]);
 
             // Mevcut sohbeti otomatik güncelle
             if (user && activeConversationId && finalMessages) {
@@ -239,6 +203,7 @@ const AiAssistantPage = () => {
                 ));
             }
         } catch (error) {
+            console.error("Chat Error:", error);
             setMessages(prev => [...prev, { role: 'model', text: 'Bir hata oluştu. Lütfen tekrar deneyin.' }]);
         } finally {
             setIsLoading(false);
@@ -380,7 +345,7 @@ const AiAssistantPage = () => {
                     <div className="px-5 py-3 bg-[#0015cf] flex items-center justify-between" style={{ flexShrink: 0 }}>
                         <div className="flex items-center gap-3">
                             <Bot size={24} className="text-white" />
-                            <h2 className="font-semibold text-white text-lg">bilAI</h2>
+                            <h2 className="font-semibold text-white text-lg">bilAI <span className="text-xs opacity-70">v2 (Edge)</span></h2>
                         </div>
                         <button onClick={startNewConversation} className="lg:hidden p-2 bg-white/20 rounded-lg text-white">
                             <Plus size={20} />

@@ -15,11 +15,18 @@ const Elektronik = () => {
     // Filter States
     const [category, setCategory] = useState('');
     const [subCategory, setSubCategory] = useState('');
-    const [brand, setBrand] = useState('');
+    const [brand, setBrand] = useState(''); // Brand ID
+    const [model, setModel] = useState(''); // Model ID
+    const [storage, setStorage] = useState('');
+    const [ram, setRam] = useState('');
     const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-    const [condition, setCondition] = useState('');
+    const [condition, setCondition] = useState(''); // Using 'status' in DB details, but let's keep 'condition' var name or unify
     const [warranty, setWarranty] = useState('');
     const [keyword, setKeyword] = useState('');
+
+    // Dynamic Data States
+    const [phoneBrands, setPhoneBrands] = useState([]);
+    const [phoneModels, setPhoneModels] = useState([]);
 
     // Filter Visibility State
     const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -32,8 +39,11 @@ const Elektronik = () => {
         category: '',
         subCategory: '',
         brand: '',
+        model: '',
+        storage: '',
+        ram: '',
         priceRange: { min: '', max: '' },
-        condition: '',
+        condition: '', // This maps to 'status' in details
         warranty: '',
         keyword: ''
     });
@@ -46,6 +56,9 @@ const Elektronik = () => {
             category,
             subCategory,
             brand,
+            model,
+            storage,
+            ram,
             priceRange,
             condition,
             warranty,
@@ -60,7 +73,25 @@ const Elektronik = () => {
 
     useEffect(() => {
         fetchCities();
+        fetchPhoneBrands();
     }, []);
+
+    useEffect(() => {
+        if (brand) {
+            fetchPhoneModels(brand);
+        } else {
+            setPhoneModels([]);
+        }
+        // Reset model if brand changes
+        // But here 'brand' state changes immediately on UI, appliedFilters.brand changes on button click.
+        // We should fetch models based on UI selection 'brand'.
+        if (brand && model) {
+            // Optional: check if model belongs to brand or reset.
+            // For simplicity, we might let user clear it or clear it automatically if we want strict dependency.
+            // setModel(''); // Uncommenting this would clear model every time brand is re-clicked/set.
+            // Better to clear model only if brand changes to something else.
+        }
+    }, [brand]);
 
     useEffect(() => {
         if (selectedCity) {
@@ -86,6 +117,40 @@ const Elektronik = () => {
     useEffect(() => {
         fetchListings();
     }, [appliedFilters]);
+
+    const fetchPhoneBrands = async () => {
+        try {
+            const { data, error } = await supabase.from('phone_brands').select('*').order('name');
+            if (error) throw error;
+            setPhoneBrands(data || []);
+        } catch (error) {
+            console.error('Telefon markaları çekilirken hata:', error.message);
+        }
+    };
+
+    const fetchPhoneModels = async (brandId) => {
+        try {
+            const { data, error } = await supabase.from('phone_models').select('*').eq('brand_id', brandId).order('name');
+            if (error) throw error;
+
+            // Filter models based on subCategory if selected
+            let filteredData = data || [];
+            if (appliedFilters.subCategory === 'Cep Telefonu') {
+                filteredData = filteredData.filter(m => !m.name.match(/iPad|Tab|Pad|Watch/i));
+            } else if (appliedFilters.subCategory === 'Tablet') {
+                filteredData = filteredData.filter(m => m.name.match(/iPad|Tab|Pad/i));
+            }
+            // For 'Telefon' category general selection, we might still show everything or try to filter? 
+            // The user complaint was "Category Telefon selected -> Tablet models appear". 
+            // If appliedFilters.category === 'telefon' and subCategory is empty, 
+            // maybe we should separate them? But usually 'Phone' category implies phones. 
+            // Let's at least fix the subCategory case which is the most explicit.
+
+            setPhoneModels(filteredData);
+        } catch (error) {
+            console.error('Telefon modelleri çekilirken hata:', error.message);
+        }
+    };
 
     const fetchCities = async () => {
         try {
@@ -155,13 +220,28 @@ const Elektronik = () => {
 
             // JSONB Filters
             if (appliedFilters.brand) {
+                // brand is stored as ID in details->brand
                 query = query.contains('details', { brand: appliedFilters.brand });
+            }
+            if (appliedFilters.model) {
+                query = query.contains('details', { model: appliedFilters.model });
+            }
+            if (appliedFilters.storage) {
+                query = query.contains('details', { storage: appliedFilters.storage });
+            }
+            if (appliedFilters.ram) {
+                query = query.contains('details', { ram: appliedFilters.ram });
             }
             if (appliedFilters.subCategory) {
                 query = query.contains('details', { subCategory: appliedFilters.subCategory });
             }
             if (appliedFilters.condition) {
-                query = query.contains('details', { condition: appliedFilters.condition });
+                // In ilanEkle we save as 'status', here state is 'condition'. 
+                // Let's match db field which is 'status'.
+                query = query.contains('details', { status: appliedFilters.condition });
+            }
+            if (appliedFilters.warranty) {
+                query = query.contains('details', { warranty: appliedFilters.warranty });
             }
 
             const { data: listingsData, error: listingsError } = await query;
@@ -222,13 +302,10 @@ const Elektronik = () => {
     ];
 
     const subCategories = {
-        'telefon': ['Cep Telefonu', 'Sabit Telefon', 'Telsiz', 'Aksesuar', 'Numara', 'Giyilebilir Teknoloji'],
+        'telefon': ['Cep Telefonu', 'Tablet', 'Aksesuar', 'Giyilebilir Teknoloji', 'Telsiz', 'Numara', 'Masaüstü Telefon'],
         'bilgisayar': ['Dizüstü', 'Masaüstü', 'Tablet', 'Sunucu', 'Çevre Birimleri', 'Bileşenler'],
         'tv': ['Televizyon', 'Uydu Sistemleri', 'Ev Sinema Sistemleri', 'Projeksiyon', 'Medya Oynatıcı'],
-        // ... extend as needed
     };
-
-    const brands = ['Apple', 'Samsung', 'Xiaomi', 'Huawei', 'Oppo', 'Sony', 'LG', 'Asus', 'Lenovo', 'HP', 'Dell', 'Monster', 'Casper'];
 
     const FilterSection = ({ title, children, isOpen = true }) => {
         const [show, setShow] = useState(isOpen);
@@ -270,6 +347,9 @@ const Elektronik = () => {
                                     setCategory('');
                                     setSubCategory('');
                                     setBrand('');
+                                    setModel('');
+                                    setStorage('');
+                                    setRam('');
                                     setPriceRange({ min: '', max: '' });
                                     setCondition('');
                                     setWarranty('');
@@ -284,6 +364,9 @@ const Elektronik = () => {
                                         category: '',
                                         subCategory: '',
                                         brand: '',
+                                        model: '',
+                                        storage: '',
+                                        ram: '',
                                         priceRange: { min: '', max: '' },
                                         condition: '',
                                         warranty: '',
@@ -375,15 +458,72 @@ const Elektronik = () => {
                             {/* Brand */}
                             <FilterSection title="Marka" isOpen={true}>
                                 <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                                    {brands.map(b => (
-                                        <label key={b} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                    {phoneBrands.map(b => (
+                                        <label key={b.id} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
                                             <input
                                                 type="checkbox"
                                                 className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                checked={brand === b} // Example, normally multi-select
-                                                onChange={() => setBrand(brand === b ? '' : b)}
+                                                checked={brand == b.id} // use loose equality for string/number match or use stored type
+                                                onChange={() => {
+                                                    const newVal = brand == b.id ? '' : b.id;
+                                                    setBrand(newVal);
+                                                    setModel(''); // Reset model when brand changes
+                                                }}
                                             />
-                                            {b}
+                                            {b.name}
+                                        </label>
+                                    ))}
+                                </div>
+                            </FilterSection>
+
+                            {/* Model */}
+                            {brand && phoneModels.length > 0 && (
+                                <FilterSection title="Model" isOpen={true}>
+                                    <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                        {phoneModels.map(m => (
+                                            <label key={m.id} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    checked={model == m.id}
+                                                    onChange={() => setModel(model == m.id ? '' : m.id)}
+                                                />
+                                                {m.name}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </FilterSection>
+                            )}
+
+                            {/* Storage */}
+                            <FilterSection title="Dahili Hafıza" isOpen={false}>
+                                <div className="space-y-2">
+                                    {['16 GB', '32 GB', '64 GB', '128 GB', '256 GB', '512 GB', '1 TB'].map(s => (
+                                        <label key={s} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                checked={storage === s}
+                                                onChange={() => setStorage(storage === s ? '' : s)}
+                                            />
+                                            {s}
+                                        </label>
+                                    ))}
+                                </div>
+                            </FilterSection>
+
+                            {/* RAM */}
+                            <FilterSection title="RAM" isOpen={false}>
+                                <div className="space-y-2">
+                                    {['2 GB', '3 GB', '4 GB', '6 GB', '8 GB', '12 GB', '16 GB'].map(r => (
+                                        <label key={r} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                checked={ram === r}
+                                                onChange={() => setRam(ram === r ? '' : r)}
+                                            />
+                                            {r}
                                         </label>
                                     ))}
                                 </div>
@@ -412,9 +552,14 @@ const Elektronik = () => {
                             {/* Condition */}
                             <FilterSection title="Durum" isOpen={false}>
                                 <div className="space-y-2">
-                                    {['Sıfır', 'İkinci El', 'Yenilenmiş (Refurbished)'].map(cond => (
+                                    {['Sıfır', 'İkinci El', 'Yenilenmiş'].map(cond => (
                                         <label key={cond} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                checked={condition === cond}
+                                                onChange={() => setCondition(condition === cond ? '' : cond)}
+                                            />
                                             {cond}
                                         </label>
                                     ))}
@@ -424,9 +569,14 @@ const Elektronik = () => {
                             {/* Warranty */}
                             <FilterSection title="Garanti Durumu" isOpen={false}>
                                 <div className="space-y-2">
-                                    {['Garantisi Var', 'Garantisi Yok', 'Kutu/Fatura Mevcut'].map(w => (
+                                    {['Var', 'Yok'].map(w => (
                                         <label key={w} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                            <input
+                                                type="checkbox"
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                checked={warranty === w}
+                                                onChange={() => setWarranty(warranty === w ? '' : w)}
+                                            />
                                             {w}
                                         </label>
                                     ))}
@@ -541,6 +691,9 @@ const Elektronik = () => {
                                     setCategory('');
                                     setSubCategory('');
                                     setBrand('');
+                                    setModel('');
+                                    setStorage('');
+                                    setRam('');
                                     setPriceRange({ min: '', max: '' });
                                     setCondition('');
                                     setWarranty('');
@@ -554,6 +707,9 @@ const Elektronik = () => {
                                         category: '',
                                         subCategory: '',
                                         brand: '',
+                                        model: '',
+                                        storage: '',
+                                        ram: '',
                                         priceRange: { min: '', max: '' },
                                         condition: '',
                                         warranty: ''

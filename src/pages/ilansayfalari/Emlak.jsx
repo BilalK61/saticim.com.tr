@@ -21,6 +21,13 @@ const Emlak = () => {
     const [buildingAge, setBuildingAge] = useState('');
     const [heating, setHeating] = useState('');
     const [floor, setFloor] = useState('');
+    const [bathroomCount, setBathroomCount] = useState('');
+    const [furnished, setFurnished] = useState(false);
+    const [balcony, setBalcony] = useState(false);
+    const [fromSite, setFromSite] = useState(false);
+    const [credit, setCredit] = useState('');
+    const [swap, setSwap] = useState('');
+    const [zoning, setZoning] = useState('');
     const [keyword, setKeyword] = useState('');
 
     // Filter Visibility State
@@ -39,6 +46,13 @@ const Emlak = () => {
         buildingAge: '',
         heating: '',
         floor: '',
+        bathroomCount: '',
+        furnished: false,
+        balcony: false,
+        fromSite: false,
+        credit: '',
+        swap: '',
+        zoning: '',
         keyword: ''
     });
 
@@ -55,6 +69,13 @@ const Emlak = () => {
             buildingAge,
             heating,
             floor,
+            bathroomCount,
+            furnished,
+            balcony,
+            fromSite,
+            credit,
+            swap,
+            zoning,
             keyword
         });
         setShowMobileFilters(false); // Close mobile filters after applying
@@ -146,6 +167,9 @@ const Emlak = () => {
     const roomCounts = ['1+0', '1+1', '2+0', '2+1', '2+2', '3+1', '3+2', '4+1', '4+2', '5+1', '5+2', '6+ A üzeri'];
     const ages = ['0', '1', '2', '3', '4', '5-10', '11-15', '16-20', '21 ve üzeri'];
     const heatings = ['Kombi (Doğalgaz)', 'Merkezi', 'Merkezi (Pay Ölçer)', 'Yerden Isıtma', 'Klima', 'Soba', 'Yok'];
+    const bathroomCounts = ['1', '2', '3', '4', '5', '6+ Üzeri'];
+    const zoningTypes = ['Konut', 'Ticari', 'Bağ-Bahçe', 'Tarla', 'Sanayi', 'Zeytinlik', 'Sit Alanı', 'Diğer'];
+
     // Data States
     const [listings, setListings] = useState([]);
     const [loadingListings, setLoadingListings] = useState(false);
@@ -182,8 +206,17 @@ const Emlak = () => {
                 query = query.contains('details', { room: appliedFilters.roomCount });
             }
             if (appliedFilters.subCategory) {
-                query = query.contains('details', { type: appliedFilters.subCategory }); // Assuming type maps to subCategory
+                query = query.contains('details', { type: appliedFilters.subCategory });
             }
+            if (appliedFilters.bathroomCount) query = query.contains('details', { bathroom: appliedFilters.bathroomCount });
+            if (appliedFilters.furnished) query = query.contains('details', { furnished: true });
+            if (appliedFilters.balcony) query = query.contains('details', { balcony: true });
+            if (appliedFilters.fromSite) query = query.contains('details', { fromSite: true });
+            if (appliedFilters.zoning) query = query.contains('details', { zoning: appliedFilters.zoning });
+
+            // Boolean/String checks (assuming these are stored as 'Var'/'Yok' or boolean in details)
+            if (appliedFilters.credit === 'true') query = query.eq('credit', true);
+            if (appliedFilters.swap === 'true') query = query.eq('swap', true);
 
             const { data: listingsData, error: listingsError } = await query;
 
@@ -281,6 +314,13 @@ const Emlak = () => {
                                         setSelectedCity('');
                                         setSelectedDistrict('');
                                         setSelectedNeighborhood('');
+                                        setBathroomCount('');
+                                        setFurnished(false);
+                                        setBalcony(false);
+                                        setFromSite(false);
+                                        setCredit('');
+                                        setSwap('');
+                                        setZoning('');
                                         setAppliedFilters({
                                             selectedCity: '',
                                             selectedDistrict: '',
@@ -293,6 +333,13 @@ const Emlak = () => {
                                             buildingAge: '',
                                             heating: '',
                                             floor: '',
+                                            bathroomCount: '',
+                                            furnished: false,
+                                            balcony: false,
+                                            fromSite: false,
+                                            credit: '',
+                                            swap: '',
+                                            zoning: '',
                                             keyword: ''
                                         });
                                     }}
@@ -422,62 +469,162 @@ const Emlak = () => {
                                 </div>
                             </FilterSection>
 
-                            {/* Room Count */}
-                            <FilterSection title="Oda Sayısı">
-                                <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                                    {roomCounts.map(rc => (
-                                        <label key={rc} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input
-                                                type="checkbox"
-                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                checked={roomCount === rc} // Example logic, normally multi-select
-                                                onChange={() => setRoomCount(rc)}
-                                            />
-                                            {rc}
-                                        </label>
-                                    ))}
-                                </div>
-                            </FilterSection>
+                            {/* Residential Specific Filters */}
+                            {category !== 'arsa' && (
+                                <>
+                                    {/* Room Count */}
+                                    <FilterSection title="Oda Sayısı">
+                                        <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                            {roomCounts.map(rc => (
+                                                <label key={rc} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                        checked={roomCount === rc} // Example logic, normally multi-select
+                                                        onChange={() => setRoomCount(rc)}
+                                                    />
+                                                    {rc}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </FilterSection>
 
-                            {/* Building Age */}
-                            <FilterSection title="Bina Yaşı" isOpen={false}>
+                                    {/* Building Age */}
+                                    <FilterSection title="Bina Yaşı" isOpen={false}>
+                                        <div className="space-y-2">
+                                            {ages.map(age => (
+                                                <label key={age} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                                    {age}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </FilterSection>
+
+                                    {/* Floor */}
+                                    <FilterSection title="Bulunduğu Kat" isOpen={false}>
+                                        <select
+                                            className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            value={floor}
+                                            onChange={(e) => setFloor(e.target.value)}
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            <option value="Bahçe Katı">Bahçe Katı</option>
+                                            <option value="Giriş Katı">Giriş Katı</option>
+                                            <option value="Yüksek Giriş">Yüksek Giriş</option>
+                                            <option value="Müstakil">Müstakil</option>
+                                            {[...Array(30).keys()].map(i => <option key={i + 1} value={i + 1}>{i + 1}. Kat</option>)}
+                                            <option value="Kot 1">Kot 1</option>
+                                            <option value="Kot 2">Kot 2</option>
+                                        </select>
+                                    </FilterSection>
+
+                                    {/* Heating */}
+                                    <FilterSection title="Isıtma" isOpen={false}>
+                                        <div className="space-y-2">
+                                            {heatings.map(h => (
+                                                <label key={h} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                                    {h}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </FilterSection>
+
+                                    {/* Bathroom Count */}
+                                    <FilterSection title="Banyo Sayısı" isOpen={false}>
+                                        <div className="space-y-2">
+                                            {bathroomCounts.map(bc => (
+                                                <label key={bc} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                    <input
+                                                        type="radio"
+                                                        name="bathroom"
+                                                        className="w-4 h-4 rounded-full border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                        checked={bathroomCount === bc}
+                                                        onChange={() => setBathroomCount(bc)}
+                                                    />
+                                                    {bc}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </FilterSection>
+
+                                    {/* Additional Boolean Filters */}
+                                    <FilterSection title="Diğer Özellikler" isOpen={false}>
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    checked={furnished}
+                                                    onChange={(e) => setFurnished(e.target.checked)}
+                                                />
+                                                Eşyalı
+                                            </label>
+                                            <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    checked={balcony}
+                                                    onChange={(e) => setBalcony(e.target.checked)}
+                                                />
+                                                Balkon
+                                            </label>
+                                            <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                <input
+                                                    type="checkbox"
+                                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    checked={fromSite}
+                                                    onChange={(e) => setFromSite(e.target.checked)}
+                                                />
+                                                Site İçerisinde
+                                            </label>
+                                        </div>
+                                    </FilterSection>
+                                </>
+                            )}
+
+                            {/* Land Specific Filters */}
+                            {category === 'arsa' && (
+                                <FilterSection title="İmar Durumu">
+                                    <div className="space-y-2">
+                                        {zoningTypes.map(z => (
+                                            <label key={z} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                                <input
+                                                    type="radio"
+                                                    name="zoning"
+                                                    className="w-4 h-4 rounded-full border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    checked={zoning === z}
+                                                    onChange={() => setZoning(z)}
+                                                />
+                                                {z}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </FilterSection>
+                            )}
+
+                            {/* General Additional Filters */}
+                            <FilterSection title="Kredi & Takas" isOpen={false}>
                                 <div className="space-y-2">
-                                    {ages.map(age => (
-                                        <label key={age} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                            {age}
-                                        </label>
-                                    ))}
-                                </div>
-                            </FilterSection>
-
-                            {/* Floor */}
-                            <FilterSection title="Bulunduğu Kat" isOpen={false}>
-                                <select
-                                    className="w-full p-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={floor}
-                                    onChange={(e) => setFloor(e.target.value)}
-                                >
-                                    <option value="">Seçiniz</option>
-                                    <option value="Bahçe Katı">Bahçe Katı</option>
-                                    <option value="Giriş Katı">Giriş Katı</option>
-                                    <option value="Yüksek Giriş">Yüksek Giriş</option>
-                                    <option value="Müstakil">Müstakil</option>
-                                    {[...Array(30).keys()].map(i => <option key={i + 1} value={i + 1}>{i + 1}. Kat</option>)}
-                                    <option value="Kot 1">Kot 1</option>
-                                    <option value="Kot 2">Kot 2</option>
-                                </select>
-                            </FilterSection>
-
-                            {/* Heating */}
-                            <FilterSection title="Isıtma" isOpen={false}>
-                                <div className="space-y-2">
-                                    {heatings.map(h => (
-                                        <label key={h} className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
-                                            <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                                            {h}
-                                        </label>
-                                    ))}
+                                    <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            checked={credit === 'true'}
+                                            onChange={(e) => setCredit(e.target.checked ? 'true' : '')}
+                                        />
+                                        Krediye Uygun
+                                    </label>
+                                    <label className="flex items-center gap-2.5 text-sm text-gray-700 cursor-pointer hover:text-blue-600">
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            checked={swap === 'true'}
+                                            onChange={(e) => setSwap(e.target.checked ? 'true' : '')}
+                                        />
+                                        Takaslı
+                                    </label>
                                 </div>
                             </FilterSection>
 
@@ -603,6 +750,13 @@ const Emlak = () => {
                                     setBuildingAge('');
                                     setHeating('');
                                     setFloor('');
+                                    setBathroomCount('');
+                                    setFurnished(false);
+                                    setBalcony(false);
+                                    setFromSite(false);
+                                    setCredit('');
+                                    setSwap('');
+                                    setZoning('');
                                     setSelectedCity('');
                                     setSelectedDistrict('');
                                     setAppliedFilters({
@@ -616,7 +770,15 @@ const Emlak = () => {
                                         sizeRange: { min: '', max: '' },
                                         buildingAge: '',
                                         heating: '',
-                                        floor: ''
+                                        floor: '',
+                                        bathroomCount: '',
+                                        furnished: false,
+                                        balcony: false,
+                                        fromSite: false,
+                                        credit: '',
+                                        swap: '',
+                                        zoning: '',
+                                        keyword: ''
                                     });
                                 }}
                                 className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
