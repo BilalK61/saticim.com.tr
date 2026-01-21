@@ -140,7 +140,7 @@ const Reports = () => {
                                             {report.listings ? (
                                                 <div className="flex flex-col">
                                                     <span className="font-medium text-gray-900 truncate max-w-xs">{report.listings.title}</span>
-                                                    <a href={`/ilan-detay/${report.listing_id}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-xs hover:underline flex items-center gap-1 mt-1">
+                                                    <a href={`/ilan/${report.listing_id}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-xs hover:underline flex items-center gap-1 mt-1">
                                                         İlana Git <ExternalLink size={10} />
                                                     </a>
                                                 </div>

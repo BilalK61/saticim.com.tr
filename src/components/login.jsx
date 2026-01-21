@@ -77,6 +77,22 @@ const LoginPage = () => {
 
             if (error) throw error;
 
+            // Security Notification
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    await supabase.from('notifications').insert({
+                        user_id: user.id,
+                        type: 'security',
+                        title: 'Yeni Giriş',
+                        message: 'Hesabınıza yeni bir giriş yapıldı.',
+                        link: '/profil'
+                    });
+                }
+            } catch (notifyError) {
+                console.warn('Login notification failed:', notifyError);
+            }
+
             showModal('Başarılı', 'Giriş başarılı! Ana sayfaya yönlendiriliyorsunuz...', 'success', () => {
                 window.location.href = '/';
             });
@@ -131,7 +147,7 @@ const LoginPage = () => {
                     </div>
 
                     {/* Login Form */}
-                    <div className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -179,13 +195,13 @@ const LoginPage = () => {
                                 />
                                 <span className="text-sm text-gray-700">Beni hatırla</span>
                             </label>
-                            <button onClick={() => window.location.href = '/forgot-password'} className="text-sm text-blue-600 hover:underline">
+                            <button type="button" onClick={() => window.location.href = '/forgot-password'} className="text-sm text-blue-600 hover:underline">
                                 Şifremi Unuttum
                             </button>
                         </div>
 
                         <button
-                            onClick={handleSubmit}
+                            type="submit"
                             disabled={isLoading}
                             className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl font-semibold hover:shadow-lg hover:-translate-y-0.5 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -201,7 +217,7 @@ const LoginPage = () => {
                                 </>
                             )}
                         </button>
-                    </div>
+                    </form>
 
                     {/* Footer */}
                     <div className="mt-6 text-center text-sm text-gray-600">

@@ -289,7 +289,7 @@ const IsIlanlari = () => {
                     ) : listings.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {listings.map(l => (
-                                <a key={l.id} href={`/ilan-detay/${l.id}`} className="block group">
+                                <a key={l.id} href={`/ilan/${l.id}`} className="block group">
                                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
                                         <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
                                             {l.images && l.images.length > 0 ? (

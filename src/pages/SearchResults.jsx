@@ -189,7 +189,7 @@ const SearchResults = () => {
                                         transition={{ delay: index * 0.05 }}
                                     >
                                         <Link
-                                            to={`/ilan-detay/${listing.id}`}
+                                            to={`/ilan/${listing.id}`}
                                             className="block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                                         >
                                             <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">

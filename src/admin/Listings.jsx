@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'; // Added useRef
 import { supabase } from '../supabaseClient';
 import { Search, Filter, MoreVertical, Check, X, Eye, Trash2 } from 'lucide-react'; // Added Trash2
 import Modal from '../components/Modal';
+import ListingPreviewModal from './ListingPreviewModal'; // NEW
 
 const Listings = () => {
     const [listings, setListings] = useState([]);
@@ -9,6 +10,10 @@ const Listings = () => {
     const [error, setError] = useState(null);
     const [openMenuId, setOpenMenuId] = useState(null); // State for active dropdown
     const menuRef = useRef(null); // Ref for click outside handling
+
+    // Preview Modal State
+    const [selectedListing, setSelectedListing] = useState(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     // Modal State
     const [modal, setModal] = useState({
@@ -198,6 +203,21 @@ const Listings = () => {
         );
     };
 
+    const handlePreviewOpen = (listing) => {
+        setSelectedListing(listing);
+        setIsPreviewOpen(true);
+    };
+
+    const handlePreviewClose = () => {
+        setIsPreviewOpen(false);
+        setTimeout(() => setSelectedListing(null), 200); // Clear data after animation
+    };
+
+    const handlePreviewAction = async (id, action) => {
+        await handleStatusChange(id, action);
+        handlePreviewClose();
+    };
+
     const getStatusColor = (status) => {
         switch (status) {
             case 'approved': return 'bg-green-100 text-green-700';
@@ -287,8 +307,8 @@ const Listings = () => {
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2 relative">
                                         <button
-                                            onClick={() => window.open(`/ilan-detay/${item.id}`, '_blank')}
-                                            title="Görüntüle"
+                                            onClick={() => handlePreviewOpen(item)} // Changed to open modal
+                                            title="Önizle"
                                             className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                                         >
                                             <Eye size={18} />
@@ -358,6 +378,14 @@ const Listings = () => {
                 type={modal.type}
                 onConfirm={modal.onConfirm}
                 showCancel={modal.showCancel}
+            />
+
+            <ListingPreviewModal
+                isOpen={isPreviewOpen}
+                onClose={handlePreviewClose}
+                listing={selectedListing}
+                onApprove={(id) => handlePreviewAction(id, 'approved')}
+                onReject={(id) => handlePreviewAction(id, 'rejected')}
             />
         </div>
     );

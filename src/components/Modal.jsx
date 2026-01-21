@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, AlertCircle, CheckCircle, AlertTriangle, Info } from 'lucide-react';
 
 const Modal = ({ isOpen, onClose, title, message, type = 'info', onConfirm, confirmText = 'Tamam', cancelText = 'İptal', showCancel = false }) => {
-    if (!isOpen) return null;
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        return () => setMounted(false);
+    }, []);
+
+    if (!isOpen || !mounted) return null;
 
     const bgColors = {
         success: 'bg-green-50',
@@ -25,8 +33,8 @@ const Modal = ({ isOpen, onClose, title, message, type = 'info', onConfirm, conf
         info: 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'
     };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
             <div
                 className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all scale-100"
                 onClick={(e) => e.stopPropagation()}
@@ -67,7 +75,8 @@ const Modal = ({ isOpen, onClose, title, message, type = 'info', onConfirm, conf
                     <X size={20} />
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

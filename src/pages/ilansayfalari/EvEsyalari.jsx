@@ -294,7 +294,7 @@ const EvEsyalari = () => {
                     ) : listings.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {listings.map(listing => (
-                                <a key={listing.id} href={`/ilan-detay/${listing.id}`} className="block group">
+                                <a key={listing.id} href={`/ilan/${listing.id}`} className="block group">
                                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
                                         <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
                                             <img

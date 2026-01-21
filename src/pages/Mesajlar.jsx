@@ -109,7 +109,7 @@ const Mesajlar = () => {
                 // Just set the quoted listing if needed
                 if (urlParams.listingId && urlParams.listingTitle && !listingMessageSet.current) {
                     listingMessageSet.current = true;
-                    const listingUrl = `${window.location.origin}/ilan-detay/${urlParams.listingId}`;
+                    const listingUrl = `${window.location.origin}/ilan/${urlParams.listingId}`;
                     console.log("=== [Path 1] Listing URL:", listingUrl, "===");
                     console.log("=== [Path 1] Listing ID:", urlParams.listingId, "===");
                     console.log("=== [Path 1] Listing Title:", urlParams.listingTitle, "===");
@@ -170,7 +170,7 @@ const Mesajlar = () => {
                     listingMessageSet.current = true;
                     console.log("=== Setting quoted listing ===");
                     setTimeout(() => {
-                        const listingUrl = `${window.location.origin}/ilan-detay/${urlParams.listingId}`;
+                        const listingUrl = `${window.location.origin}/ilan/${urlParams.listingId}`;
                         console.log("=== Listing URL:", listingUrl, "===");
                         setQuotedListing({
                             id: urlParams.listingId,

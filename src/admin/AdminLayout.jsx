@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, List, Settings, LogOut, Package, Flag } from 'lucide-react';
+import { LayoutDashboard, Users, List, Settings, LogOut, Package, Flag, Trophy } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,7 @@ const AdminLayout = () => {
     const menuItems = [
         { path: '/admin', icon: LayoutDashboard, label: 'Panel' },
         { path: '/admin/listings', icon: List, label: 'İlanlar' },
+        { path: '/admin/game-scores', icon: Trophy, label: 'Oyun Skorları' }, // NEW
         { path: '/admin/reports', icon: Flag, label: 'Şikayetler' },
         { path: '/admin/users', icon: Users, label: 'Kullanıcılar' },
         { path: '/admin/settings', icon: Settings, label: 'Ayarlar' },

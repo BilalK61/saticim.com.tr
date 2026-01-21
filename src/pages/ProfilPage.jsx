@@ -394,7 +394,7 @@ const ProfilPage = () => {
                                                             <Trash2 size={12} /> Sil
                                                         </button>
                                                         <button
-                                                            onClick={() => navigate(`/ilan-detay/${listing.id}`)}
+                                                            onClick={() => navigate(`/ilan/${listing.id}`)}
                                                             className="ml-auto text-xs text-blue-600 hover:underline"
                                                         >
                                                             Görüntüle
@@ -450,7 +450,7 @@ const ProfilPage = () => {
                                                             <Heart size={12} fill="currentColor" /> Kaldır
                                                         </button>
                                                         <button
-                                                            onClick={() => navigate(`/ilan-detay/${listing.id}`)}
+                                                            onClick={() => navigate(`/ilan/${listing.id}`)}
                                                             className="ml-auto text-xs text-blue-600 hover:underline"
                                                         >
                                                             Görüntüle

@@ -164,7 +164,8 @@ const Register = () => {
                     </div>
 
                     {/* Register Form */}
-                    <div className="space-y-5">
+                    {/* Register Form */}
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <div className="relative">
                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -244,7 +245,7 @@ const Register = () => {
                         </div>
                         <div>
                             <button
-                                onClick={handleSubmit}
+                                type="submit"
                                 disabled={isLoading}
                                 className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl font-semibold hover:shadow-lg hover:-translate-y-0.5 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -261,7 +262,7 @@ const Register = () => {
                                 )}
                             </button>
                         </div>
-                    </div>
+                    </form>
 
                     {/* Footer */}
                     <div className="mt-6 text-center text-sm text-gray-600">

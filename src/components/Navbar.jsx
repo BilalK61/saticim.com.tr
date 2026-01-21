@@ -1,11 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, ChevronDown, Car, Smartphone, Briefcase, MoreHorizontal, Search, UserCircle, UserPlus, LogOut, MessageCircle, Bot, Heart, Plus, Menu, X, Building2, Shirt, Dumbbell, Sofa } from 'lucide-react';
+import { Home, ChevronDown, Car, Smartphone, Briefcase, MoreHorizontal, Search, UserCircle, UserPlus, LogOut, MessageCircle, Bot, Heart, Plus, Menu, X, Building2, Shirt, Dumbbell, Sofa, Gamepad2, Bell, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../supabaseClient';
 import { useSearchSuggestions } from '../hooks/useSearchSuggestions';
 import SearchDropdown from './SearchDropdown';
 import LoginModal from './LoginModal';
+import Modal from './Modal';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -16,7 +18,51 @@ const Navbar = () => {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [menuView, setMenuView] = useState('main'); // 'main' | 'notifications'
   const { suggestions, loading } = useSearchSuggestions(searchQuery);
+
+  // Notification States
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch Notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifications = async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (data) {
+        setNotifications(data);
+        setUnreadCount(data.filter(n => !n.is_read).length);
+      }
+    };
+
+    fetchNotifications();
+
+    // Subscribe to realtime changes
+    const subscription = supabase
+      .channel('navbar_notifications')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`
+      }, () => {
+        fetchNotifications();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [user]);
 
   // Timer ID'lerini tutmak için ref'ler
   const categoryTimeoutRef = useRef(null);
@@ -58,12 +104,14 @@ const Navbar = () => {
   const handleProfileLeave = () => {
     profileTimeoutRef.current = setTimeout(() => {
       setShowProfileMenu(false);
+      setTimeout(() => setMenuView('main'), 200);
     }, 200);
   };
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+    setShowLogoutModal(false);
   };
 
   // --- Arama Fonksiyonu ---
@@ -154,6 +202,22 @@ const Navbar = () => {
               <img src="/img/logokucuk.png" alt="bilAI" className="h-4 object-contain" />
             </button>
 
+            {/* Price Game Button */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  setShowLoginModal(true);
+                } else {
+                  navigate('/fiyat-tahmin');
+                }
+              }}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium text-sm hover:shadow-lg hover:shadow-purple-200 transition-all hover:-translate-y-0.5"
+              title="Fiyat Tahmin Oyunu"
+            >
+              <Gamepad2 className="w-4 h-4" />
+              <span className="hidden lg:inline">Oyun</span>
+            </button>
+
             {/* Profile Menu - Hidden on mobile, shown on desktop */}
             <div
               className="hidden md:block relative"
@@ -208,64 +272,134 @@ const Navbar = () => {
 
                     {/* Menu Items */}
                     <div className="p-2">
-                      {user ? (
-                        <>
-                          <button onClick={() => navigate('/profil')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors">
-                            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                              <UserCircle className="w-5 h-5 text-blue-600" />
+                      {menuView === 'notifications' ? (
+                        <div className="w-full">
+                          <div className="flex items-center gap-2 p-2 mb-2 border-b border-gray-100">
+                            <button
+                              onClick={() => setMenuView('main')}
+                              className="p-1 hover:bg-gray-100 rounded-lg transition"
+                            >
+                              <ArrowLeft className="w-4 h-4 text-gray-600" />
+                            </button>
+                            <span className="font-medium text-gray-900 text-sm">Bildirimler</span>
+                          </div>
+                          <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                            {notifications.length > 0 ? (
+                              notifications.map((notif) => (
+                                <div
+                                  key={notif.id}
+                                  onClick={() => {
+                                    if (notif.link) {
+                                      setShowProfileMenu(false);
+                                      navigate(notif.link.replace('/ilan/', '/ilan/'));
+                                    }
+                                  }}
+                                  className={`p-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer flex gap-3 ${!notif.is_read ? 'bg-blue-50/50' : ''}`}
+                                >
+                                  <div className={`w-2 h-2 mt-1.5 rounded-full shrink-0 ${!notif.is_read ? 'bg-blue-600' : 'bg-gray-300'}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">{notif.title}</p>
+                                    <p className="text-xs text-gray-500 line-clamp-2">{notif.message}</p>
+                                    <p className="text-[10px] text-gray-400 mt-1">
+                                      {new Date(notif.created_at).toLocaleDateString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="p-4 text-center text-gray-500 text-xs">
+                                Henüz bildiriminiz yok.
+                              </div>
+                            )}
+                            <div className="pt-2 text-center border-t border-gray-100 mt-2">
+                              <button
+                                onClick={() => {
+                                  setShowProfileMenu(false);
+                                  navigate('/bildirimler');
+                                }}
+                                className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline py-1 w-full"
+                              >
+                                Tümünü Gör
+                              </button>
                             </div>
-                            <div className="text-left">
-                              <div className="font-medium text-sm">Profilim</div>
-                              <div className="text-xs text-gray-400">Hesap bilgilerini yönet</div>
-                            </div>
-                          </button>
-                          <button onClick={() => navigate('/profil?tab=favorites')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors">
-                            <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
-                              <Heart className="w-5 h-5 text-red-500" />
-                            </div>
-                            <div className="text-left">
-                              <div className="font-medium text-sm">Favorilerim</div>
-                              <div className="text-xs text-gray-400">Kaydettiğin ilanlar</div>
-                            </div>
-                          </button>
-                          <button onClick={() => navigate('/mesajlar')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors">
-                            <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
-                              <MessageCircle className="w-5 h-5 text-green-600" />
-                            </div>
-                            <div className="text-left">
-                              <div className="font-medium text-sm">Mesajlarım</div>
-                              <div className="text-xs text-gray-400">Konuşmalarını gör</div>
-                            </div>
-                          </button>
-                          <div className="my-2 border-t border-gray-100"></div>
-                          <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 text-red-600 transition-colors">
-                            <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
-                              <LogOut className="w-5 h-5" />
-                            </div>
-                            <span className="font-medium text-sm">Çıkış Yap</span>
-                          </button>
-                        </>
+                          </div>
+                        </div>
                       ) : (
-                        <>
-                          <button onClick={() => navigate('/login')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-blue-50 text-blue-600 transition-colors">
-                            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
-                              <UserCircle className="w-5 h-5" />
-                            </div>
-                            <div className="text-left">
-                              <div className="font-medium text-sm">Giriş Yap</div>
-                              <div className="text-xs text-gray-400">Hesabına erişim sağla</div>
-                            </div>
-                          </button>
-                          <button onClick={() => navigate('/register')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors">
-                            <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
-                              <UserPlus className="w-5 h-5" />
-                            </div>
-                            <div className="text-left">
-                              <div className="font-medium text-sm">Kayıt Ol</div>
-                              <div className="text-xs text-gray-400">Yeni hesap oluştur</div>
-                            </div>
-                          </button>
-                        </>
+                        user ? (
+                          <>
+                            <button onClick={() => navigate('/profil')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors">
+                              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                                <UserCircle className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <div className="text-left">
+                                <div className="font-medium text-sm">Profilim</div>
+                                <div className="text-xs text-gray-400">Hesap bilgilerini yönet</div>
+                              </div>
+                            </button>
+                            <button onClick={() => navigate('/profil?tab=favorites')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors">
+                              <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+                                <Heart className="w-5 h-5 text-red-500" />
+                              </div>
+                              <div className="text-left">
+                                <div className="font-medium text-sm">Favorilerim</div>
+                                <div className="text-xs text-gray-400">Kaydettiğin ilanlar</div>
+                              </div>
+                            </button>
+                            <button onClick={() => navigate('/mesajlar')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors">
+                              <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
+                                <MessageCircle className="w-5 h-5 text-green-600" />
+                              </div>
+                              <div className="text-left">
+                                <div className="font-medium text-sm">Mesajlarım</div>
+                                <div className="text-xs text-gray-400">Konuşmalarını gör</div>
+                              </div>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setMenuView('notifications');
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors"
+                            >
+                              <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center">
+                                <Bell className="w-5 h-5 text-amber-600" />
+                              </div>
+                              <div className="text-left">
+                                <div className="font-medium text-sm">Bildirimler</div>
+                                <div className="text-xs text-gray-400">Bildirimlerini gör</div>
+                              </div>
+                            </button>
+                            <div className="my-2 border-t border-gray-100"></div>
+                            <button onClick={() => { setShowLogoutModal(true); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 text-red-600 transition-colors">
+                              <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
+                                <LogOut className="w-5 h-5" />
+                              </div>
+                              <span className="font-medium text-sm">Çıkış Yap</span>
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => navigate('/login')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-blue-50 text-blue-600 transition-colors">
+                              <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+                                <UserCircle className="w-5 h-5" />
+                              </div>
+                              <div className="text-left">
+                                <div className="font-medium text-sm">Giriş Yap</div>
+                                <div className="text-xs text-gray-400">Hesabına erişim sağla</div>
+                              </div>
+                            </button>
+                            <button onClick={() => navigate('/register')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors">
+                              <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+                                <UserPlus className="w-5 h-5" />
+                              </div>
+                              <div className="text-left">
+                                <div className="font-medium text-sm">Kayıt Ol</div>
+                                <div className="text-xs text-gray-400">Yeni hesap oluştur</div>
+                              </div>
+                            </button>
+                          </>
+                        )
                       )}
                     </div>
                   </motion.div>
@@ -438,6 +572,22 @@ const Navbar = () => {
                 <span>bilAI Asistan</span>
               </button>
 
+              {/* Price Game - Mobile */}
+              <button
+                onClick={() => {
+                  if (!user) {
+                    setShowLoginModal(true);
+                  } else {
+                    navigate('/fiyat-tahmin');
+                  }
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full mt-2 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium"
+              >
+                <Gamepad2 className="w-5 h-5" />
+                <span>Fiyat Tahmin Oyunu</span>
+              </button>
+
               {/* Categories Grid */}
               <div className="grid grid-cols-4 gap-2 pt-2">
                 {categories.map((cat, idx) => {
@@ -482,7 +632,7 @@ const Navbar = () => {
                     </div>
 
                     {/* Profile Links */}
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => { navigate('/profil'); setMobileMenuOpen(false); }}
                         className="flex flex-col items-center gap-1 p-3 bg-blue-50 rounded-xl"
@@ -504,11 +654,18 @@ const Navbar = () => {
                         <MessageCircle className="w-5 h-5 text-green-600" />
                         <span className="text-xs text-green-700 font-medium">Mesajlar</span>
                       </button>
+                      <button
+                        onClick={() => { navigate('/bildirimler'); setMobileMenuOpen(false); }}
+                        className="flex flex-col items-center gap-1 p-3 bg-amber-50 rounded-xl"
+                      >
+                        <Bell className="w-5 h-5 text-amber-600" />
+                        <span className="text-xs text-amber-700 font-medium">Bildirimler</span>
+                      </button>
                     </div>
 
                     {/* Logout */}
                     <button
-                      onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
+                      onClick={() => { setShowLogoutModal(true); setMobileMenuOpen(false); }}
                       className="w-full flex items-center justify-center gap-2 py-2.5 text-red-600 bg-red-50 rounded-xl font-medium text-sm"
                     >
                       <LogOut className="w-4 h-4" />
@@ -542,6 +699,18 @@ const Navbar = () => {
       <LoginModal
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
+      />
+
+      <Modal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        title="Çıkış Yap"
+        message="Hesabınızdan çıkış yapmak istediğinize emin misiniz?"
+        type="warning"
+        confirmText="Çıkış Yap"
+        cancelText="İptal"
+        showCancel={true}
+        onConfirm={handleSignOut}
       />
     </header>
   );

@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
-    // 1. CORS Preflight (Tarayıcıdan gelen ön istek)
+    // 1. CORS Preflight
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
@@ -18,33 +18,37 @@ serve(async (req: Request) => {
         const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
         if (!supabaseUrl || !supabaseAnonKey || !geminiApiKey) {
-            throw new Error('Gerekli API anahtarları (ENV) eksik.');
+            throw new Error('Gerekli environment variables eksik.');
         }
 
         const { message, history } = await req.json();
 
-        // Supabase Client Oluşturma
         const supabaseClient = createClient(
             supabaseUrl,
             supabaseAnonKey,
             { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
         );
 
-        // --- Helper: Gemini API Çağrısı (Fetch ile) ---
+        // --- Helper: Gemini API Call ---
         async function callGemini(contents: any[], tools?: any[]) {
-            // DÜZELTME 1: Model isminden emin olalım. 'gemini-1.5-flash' şu an en stabil olanı.
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
+            // LİSTEDE GÖRDÜĞÜMÜZ VE ÇALIŞACAK OLAN MODEL:
+            const modelName = 'gemini-2.0-flash-lite-preview-02-05';
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiApiKey}`;
 
             const payload: any = {
                 contents: contents,
-                system_instruction: {
-                    parts: [{ text: "Sen saticim.com.tr asistanısın. Kullanıcı ürün aradığında MUTLAKA 'urunleriGetir' fonksiyonunu kullan. Para birimi TL. İlanın başlığını, fiyatını ve şehrini söyle. Link verme." }]
+                // Bu model için tools konfigürasyonu
+                tools: tools && tools.length > 0 ? tools : undefined,
+                generationConfig: {
+                    temperature: 0.7
                 }
             };
 
-            if (tools) {
-                payload.tools = tools;
-            }
+            // System instruction'ı 2.0 modelleri genellikle destekler ama
+            // garanti olsun diye history içine gömmek daha güvenlidir.
+
+            console.log("Calling Gemini API:", url);
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -54,127 +58,133 @@ serve(async (req: Request) => {
 
             if (!response.ok) {
                 const errorBody = await response.text();
-                // 404 veya 500 hatalarını burada yakalayıp detaylı gösteriyoruz
+                console.error("Gemini API Error Response:", errorBody);
                 throw new Error(`Gemini API Error: ${response.status} - ${errorBody}`);
             }
 
             return await response.json();
         }
 
-        // --- Geçmişi Düzenle (Formatlama) ---
-        let geminiHistory = (history || []).map((msg: any) => ({
-            role: msg.role === 'model' ? 'model' : 'user',
-            parts: msg.parts || [{ text: msg.text }]
-        }));
+        // --- History Format ---
+        let geminiContents: any[] = [];
 
-        geminiHistory.push({
-            role: 'user',
-            parts: [{ text: message }]
+        // SİSTEM TALİMATI (Prompt Engineering)
+        // Modeli ne yapması gerektiği konusunda eğitiyoruz.
+        geminiContents.push({
+            role: "user",
+            parts: [{ text: "SİSTEM TALİMATI: Sen saticim.com.tr platformunun asistanısın. Görevin kullanıcının aradığı ilanları bulmak. Kullanıcı bir ürün aradığında (örneğin 'telefon', 'bmw', 'ev') MUTLAKA 'urunleriGetir' fonksiyonunu çağır. Sana gelen ilan verilerini kullanıcıya özetle. Para birimi TL. İlanın başlığını, fiyatını ve şehrini söyle. Link verme. Fonksiyon çağırmazsan veri göremezsin." }]
         });
 
-        // --- Tool Tanımı ---
+        geminiContents.push({
+            role: "model",
+            parts: [{ text: "Anlaşıldı. saticim.com.tr asistanı olarak ilanları arayıp listeleyeceğim." }]
+        });
+
+        // Eski mesajları ekle
+        if (history && Array.isArray(history)) {
+            for (const msg of history) {
+                const role = msg.role === 'model' ? 'model' : 'user';
+                // Eski mesajlarda text var mı kontrol et
+                const text = msg.parts?.[0]?.text || msg.content || "";
+                if (text) {
+                    geminiContents.push({ role, parts: [{ text }] });
+                }
+                // Eğer eski mesajda fonksiyon çağrısı varsa onu da eklemeliyiz (karmaşıklık olmasın diye şimdilik atlıyoruz, sadece metinleri alıyoruz)
+            }
+        }
+
+        // Şu anki kullanıcı mesajı
+        geminiContents.push({ role: 'user', parts: [{ text: message }] });
+
+        // --- Tool Definitions ---
         const tools = [{
-            function_declarations: [{
+            functionDeclarations: [{
                 name: "urunleriGetir",
-                description: "İlan arama fonksiyonu.",
+                description: "Veritabanından ilan arayan fonksiyon. Kullanıcı ürün, kategori, fiyat veya şehir belirttiğinde bunu kullan.",
                 parameters: {
                     type: "object",
                     properties: {
-                        kategori: { type: "string" },
+                        kategori: { type: "string", description: "elektronik, vasita, emlak, giyim" },
                         maxFiyat: { type: "number" },
                         minFiyat: { type: "number" },
-                        sehir: { type: "string" }, // Şehir parametresi
+                        sehir: { type: "string" },
                         kelime: { type: "string" }
                     },
                 }
             }]
         }];
 
-        // --- 1. İlk Çağrı (Niyet Analizi) ---
-        let apiResponse = await callGemini(geminiHistory, tools);
+        // --- 1. İlk Çağrı (Gemini'a soruyoruz) ---
+        let apiResponse = await callGemini(geminiContents, tools);
 
         let finalResponseText = "Anlaşılamadı.";
         const candidate = apiResponse.candidates?.[0];
-        const functionCall = candidate?.content?.parts?.[0]?.functionCall;
+        const content = candidate?.content;
 
-        // --- 2. Fonksiyon Çağrısı Yönetimi ---
+        // Fonksiyon çağrısı var mı kontrol et
+        // Gemini 2.0 yapısı bazen farklı olabilir, en garantili yolu arıyoruz:
+        const functionCall = content?.parts?.find((p: any) => p.functionCall)?.functionCall;
+
+        // --- 2. Fonksiyon Varsa Çalıştır ---
         if (functionCall) {
             if (functionCall.name === "urunleriGetir") {
                 const args = functionCall.args;
-                console.log("Filtreler:", args);
+                console.log("Filtreler Algılandı:", args);
 
-                // DÜZELTME 2: Supabase İlişkisel Filtreleme (!inner)
-                // Şehre göre filtrelemek için 'city:cities!inner(name)' kullanmalıyız.
-                // Eğer '!inner' kullanmazsak sadece join yapar ama filtrelemez (Left Join gibi davranır).
+                // Supabase Sorgusu
                 let query = supabaseClient
                     .from('listings')
                     .select('id, title, price, city:cities!inner(name), district:districts(name), category, images')
                     .eq('status', 'approved')
-                    .limit(10);
+                    .limit(5);
 
-                // Kategori Filtresi
+                // Filtreleri Uygula
                 if (args.kategori) {
-                    const catLower = args.kategori.toLowerCase();
-                    if (catLower.includes('elektronik') || catLower.includes('telefon')) query = query.eq('category', 'elektronik');
-                    else if (catLower.includes('vasıta') || catLower.includes('araba')) query = query.eq('category', 'vasita');
-                    else if (catLower.includes('emlak')) query = query.eq('category', 'emlak');
+                    const cat = args.kategori.toLowerCase();
+                    if (cat.includes('elektronik') || cat.includes('telefon')) query = query.eq('category', 'elektronik');
+                    else if (cat.includes('vasıta') || cat.includes('araba')) query = query.eq('category', 'vasita');
+                    else if (cat.includes('emlak')) query = query.eq('category', 'emlak');
+                    else if (cat.includes('giyim')) query = query.eq('category', 'giyim');
                 }
-
                 if (args.maxFiyat) query = query.lte('price', args.maxFiyat);
                 if (args.minFiyat) query = query.gte('price', args.minFiyat);
                 if (args.kelime) query = query.ilike('title', `%${args.kelime}%`);
-
-                // DÜZELTME 3: Eksik olan Şehir Filtresi Eklendi
-                if (args.sehir) {
-                    // İlişkili tablodaki (cities) name kolonuna göre arama
-                    query = query.ilike('cities.name', `%${args.sehir}%`);
-                }
+                if (args.sehir) query = query.ilike('cities.name', `%${args.sehir}%`);
 
                 const { data: listings, error } = await query;
 
-                let functionResponseContent: any;
-
+                let functionResult = {};
                 if (error) {
-                    console.error("DB Hatası:", error);
-                    functionResponseContent = { error: "Veritabanı hatası oluştu." };
+                    console.error("DB Error:", error);
+                    functionResult = { error: "Veritabanı hatası." };
                 } else if (!listings || listings.length === 0) {
-                    functionResponseContent = { message: "Kriterlere uygun ilan bulunamadı." };
+                    functionResult = { message: "Aradığınız kriterlere uygun ilan bulunamadı." };
                 } else {
-                    // Veriyi sadeleştir (Token tasarrufu için)
-                    functionResponseContent = listings.map((l: any) => ({
-                        baslik: l.title,
-                        fiyat: l.price,
-                        sehir: l.city?.name,
-                        link: `/ilan/${l.id}`
-                    }));
+                    // Gemini'a göndermek için veriyi sadeleştir
+                    functionResult = {
+                        bulunan_ilanlar: listings.map((l: any) => ({
+                            baslik: l.title,
+                            fiyat: l.price,
+                            sehir: l.city?.name,
+                            kategori: l.category
+                        }))
+                    };
                 }
 
-                // --- 3. Gemini'a Sonucu Gönder ---
+                console.log("DB Sonuç:", functionResult);
 
-                // Fonksiyon çağrısını geçmişe ekle
-                geminiHistory.push({
-                    role: "model",
-                    parts: [{ functionCall: functionCall }]
-                });
+                // Geçmişe fonksiyon çağrısını ekle (Gemini bekliyor)
+                geminiContents.push({ role: "model", parts: [{ functionCall: functionCall }] });
+                // Fonksiyon sonucunu ekle
+                geminiContents.push({ role: "function", parts: [{ functionResponse: { name: "urunleriGetir", response: functionResult } }] });
 
-                // Fonksiyon cevabını geçmişe ekle
-                geminiHistory.push({
-                    role: "function",
-                    parts: [{
-                        functionResponse: {
-                            name: "urunleriGetir",
-                            response: { name: "urunleriGetir", content: functionResponseContent }
-                        }
-                    }]
-                });
-
-                // Son metin cevabını al
-                const secondResponse = await callGemini(geminiHistory);
-                finalResponseText = secondResponse.candidates?.[0]?.content?.parts?.[0]?.text || "İlanları listeledim.";
+                // Sonuçlarla birlikte tekrar Gemini'a sor
+                const secondResponse = await callGemini(geminiContents);
+                finalResponseText = secondResponse.candidates?.[0]?.content?.parts?.[0]?.text || "İlanları buldum ama yorumlayamadım.";
             }
         } else {
-            // Sadece sohbet
-            finalResponseText = candidate?.content?.parts?.[0]?.text || "Merhaba, nasıl yardımcı olabilirim?";
+            // Fonksiyon çağrısı yoksa sadece sohbet cevabını al
+            finalResponseText = content?.parts?.[0]?.text || "Cevap alınamadı.";
         }
 
         return new Response(JSON.stringify({ text: finalResponseText }), {
