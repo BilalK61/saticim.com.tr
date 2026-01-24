@@ -85,13 +85,11 @@ const Listings = () => {
             // First fetch listings
             console.log("Fetching listings...");
 
+
             // DEBUG: Check current user
             const { data: { user } } = await supabase.auth.getUser();
             console.log("Current User:", user);
-            if (user) {
-                const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
-                console.log("Current Profile Admin Status:", profile?.is_admin);
-            }
+
 
             const { data: listingsData, error: listingsError } = await supabase
                 .from('listings')

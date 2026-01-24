@@ -7,6 +7,9 @@ import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import EmailVerificationPage from './pages/EmailVerificationPage';
 import ProfilPage from './pages/ProfilPage';
 import IlanEkle from './pages/ilanEkle';
 import IlanDetay from './pages/ilanDetay';
@@ -19,6 +22,8 @@ import Kategoriler from './pages/kategoriler';
 import PriceGuessGame from './pages/PriceGuessGame';
 
 // Admin Files
+import AdminRoute from './admin/AdminRoute';
+import AdminLogin from './admin/admin-login';
 import AdminLayout from './admin/AdminLayout';
 import Dashboard from './admin/Dashboard';
 import Listings from './admin/Listings';
@@ -64,6 +69,9 @@ function App() {
                         <Route path="/" element={<HomePage />} />
                         <Route path="/login" element={<LoginPage />} />
                         <Route path="/register" element={<RegisterPage />} />
+                        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                        <Route path="/reset-password" element={<ResetPasswordPage />} />
+                        <Route path="/verify-email" element={<EmailVerificationPage />} />
                         <Route path="/profil" element={<ProfilPage />} />
                         <Route path="/ilan-ekle" element={<IlanEkle />} />
                         <Route path="/ilanuzenle/:id" element={<IlanEkle />} />
@@ -94,14 +102,19 @@ function App() {
                         <Route path="/fiyat-tahmin" element={<PriceGuessGame />} />
                     </Route>
 
-                    {/* Admin Routes */}
-                    <Route path="/admin" element={<AdminLayout />}>
-                        <Route index element={<Dashboard />} />
-                        <Route path="listings" element={<Listings />} />
-                        <Route path="users" element={<Users />} />
-                        <Route path="reports" element={<Reports />} />
-                        <Route path="settings" element={<Settings />} />
-                        <Route path="game-scores" element={<GameScores />} />
+                    {/* Admin Login Route (unprotected) */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
+
+                    {/* Admin Routes (protected) */}
+                    <Route element={<AdminRoute />}>
+                        <Route path="/admin" element={<AdminLayout />}>
+                            <Route index element={<Dashboard />} />
+                            <Route path="listings" element={<Listings />} />
+                            <Route path="users" element={<Users />} />
+                            <Route path="reports" element={<Reports />} />
+                            <Route path="settings" element={<Settings />} />
+                            <Route path="game-scores" element={<GameScores />} />
+                        </Route>
                     </Route>
                 </Routes>
             </Router>

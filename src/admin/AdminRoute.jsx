@@ -11,8 +11,8 @@ const AdminRoute = () => {
     }
 
     // Check for admin privileges
-    // Note: Ensure your 'profiles' table has an 'is_admin' boolean column
-    if (user.is_admin !== true) {
+    // Note: Ensure your 'profiles' table has a 'role' column with values: 'user', 'moderator', 'admin'
+    if (user.role !== 'admin') {
         // You might want to show a "Not Authorized" page instead, but redirecting to home is safe
         return <Navigate to="/" replace />;
     }
