@@ -199,7 +199,7 @@ const Navbar = () => {
               title="bilAI Asistan"
             >
               <Bot className="w-4 h-4" />
-              <img src="/img/logokucuk.png" alt="bilAI" className="h-4 object-contain" />
+              <img src="img/logokucuk.png" alt="bilAI" className="h-4 object-contain" />
             </button>
 
             {/* Price Game Button */}
@@ -585,7 +585,7 @@ const Navbar = () => {
                 className="w-full mt-2 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium"
               >
                 <Gamepad2 className="w-5 h-5" />
-                <span>Fiyat Tahmin Oyunu</span>
+                <span>Ederi Ne?</span>
               </button>
 
               {/* Categories Grid */}

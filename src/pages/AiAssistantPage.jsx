@@ -5,6 +5,7 @@ import { Send, Loader2, Bot, Plus, MessageSquare, Trash2, Sparkles } from 'lucid
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import ListingCard from '../components/ListingCard';
 const bilaiLogo = "https://ecbhhbyfocitafbfsegg.supabase.co/storage/v1/object/public/logos/logokucuk.png";
 
 // --- MOCK VERİTABANI VE FONKSİYONLAR KALDIRILDI (Backend'e taşındı) ---
@@ -183,14 +184,16 @@ const AiAssistantPage = () => {
             console.log("Edge Function Response:", data);
 
             const botResponseText = data.text || "Üzgünüm, şu an yanıt veremiyorum.";
+            const products = data.products || []; // Get products from response
 
-            const finalMessages = [...newMessages, { role: 'model', text: botResponseText }];
+            const finalMessages = [...newMessages, { role: 'model', text: botResponseText, products }];
             setMessages(finalMessages);
 
             // Update chat history for next turn
             setChatHistory(prev => [
                 ...prev,
                 { role: "user", parts: [{ text: userMessage }] },
+                // Note: We are only adding text to history context for now, ignoring function calls to keep it simple
                 { role: "model", parts: [{ text: botResponseText }] }
             ]);
 
@@ -356,8 +359,17 @@ const AiAssistantPage = () => {
                     <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gray-50" style={{ minHeight: 0 }}>
                         {messages.map((msg, idx) => (
                             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[80%] rounded-xl px-4 py-3 ${msg.role === 'user' ? 'bg-[#0015cf] text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
+                                <div className={`max-w-[85%] rounded-xl px-4 py-3 ${msg.role === 'user' ? 'bg-[#0015cf] text-white' : 'bg-white text-gray-800 border border-gray-200'}`}>
                                     {msg.text.split('\n').map((line, i) => (<p key={i} className="text-sm leading-relaxed">{line || '\u00A0'}</p>))}
+
+                                    {/* Product Recommendations */}
+                                    {msg.products && msg.products.length > 0 && (
+                                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 w-full">
+                                            {msg.products.map(product => (
+                                                <ListingCard key={product.id} listing={product} />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}

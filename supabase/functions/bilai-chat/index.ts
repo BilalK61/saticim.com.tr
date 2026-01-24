@@ -31,22 +31,19 @@ serve(async (req: Request) => {
 
         // --- Helper: Gemini API Call ---
         async function callGemini(contents: any[], tools?: any[]) {
-            // LİSTEDE GÖRDÜĞÜMÜZ VE ÇALIŞACAK OLAN MODEL:
-            const modelName = 'gemini-2.0-flash-lite-preview-02-05';
+            // LİSTEDE GÖRDÜĞÜMÜZ EN GÜVENLİ VE KOTASI OLAN MODEL:
+            // Bu isim senin paylaştığın "Bulunan Modeller" listesinde vardı.
+            const modelName = 'gemini-flash-latest';
 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiApiKey}`;
 
             const payload: any = {
                 contents: contents,
-                // Bu model için tools konfigürasyonu
                 tools: tools && tools.length > 0 ? tools : undefined,
                 generationConfig: {
                     temperature: 0.7
                 }
             };
-
-            // System instruction'ı 2.0 modelleri genellikle destekler ama
-            // garanti olsun diye history içine gömmek daha güvenlidir.
 
             console.log("Calling Gemini API:", url);
 
@@ -125,6 +122,9 @@ serve(async (req: Request) => {
         // Gemini 2.0 yapısı bazen farklı olabilir, en garantili yolu arıyoruz:
         const functionCall = content?.parts?.find((p: any) => p.functionCall)?.functionCall;
 
+        // Helper to store products for client response
+        let productsToSend: any[] = [];
+
         // --- 2. Fonksiyon Varsa Çalıştır ---
         if (functionCall) {
             if (functionCall.name === "urunleriGetir") {
@@ -134,17 +134,33 @@ serve(async (req: Request) => {
                 // Supabase Sorgusu
                 let query = supabaseClient
                     .from('listings')
-                    .select('id, title, price, city:cities!inner(name), district:districts(name), category, images')
+                    .select('id, title, price, currency, city:cities!inner(name), district:districts(name), category, images, details')
                     .eq('status', 'approved')
                     .limit(5);
 
                 // Filtreleri Uygula
                 if (args.kategori) {
                     const cat = args.kategori.toLowerCase();
-                    if (cat.includes('elektronik') || cat.includes('telefon')) query = query.eq('category', 'elektronik');
-                    else if (cat.includes('vasıta') || cat.includes('araba')) query = query.eq('category', 'vasita');
-                    else if (cat.includes('emlak')) query = query.eq('category', 'emlak');
-                    else if (cat.includes('giyim')) query = query.eq('category', 'giyim');
+
+                    // ELEKTRONİK
+                    if (cat.includes('elektronik') || cat.includes('telefon') || cat.includes('tablet')) {
+                        // Hem 'elektronik' hem 'Elektronik' yakalar
+                        query = query.ilike('category', 'elektronik');
+                    }
+                    // VASITA (En kritik yer burası)
+                    else if (cat.includes('vasıta') || cat.includes('vasita') || cat.includes('araba') || cat.includes('araç')) {
+                        // Veritabanında 'vasita', 'vasıta', 'Vasıta' ne varsa yakalaması için 'vas%ta' (joker karakter) kullanıyoruz
+                        // Veya veritabanındaki kesin ismini biliyorsan onu yaz. Örn: 'vasıta'
+                        query = query.or('category.eq.vasita,category.eq.vasıta,category.eq.Vasıta,category.eq.Vasita');
+                    }
+                    // EMLAK
+                    else if (cat.includes('emlak') || cat.includes('ev') || cat.includes('konut')) {
+                        query = query.ilike('category', 'emlak');
+                    }
+                    // GİYİM
+                    else if (cat.includes('giyim') || cat.includes('kıyafet')) {
+                        query = query.ilike('category', 'giyim');
+                    }
                 }
                 if (args.maxFiyat) query = query.lte('price', args.maxFiyat);
                 if (args.minFiyat) query = query.gte('price', args.minFiyat);
@@ -160,6 +176,9 @@ serve(async (req: Request) => {
                 } else if (!listings || listings.length === 0) {
                     functionResult = { message: "Aradığınız kriterlere uygun ilan bulunamadı." };
                 } else {
+                    // Save for client response
+                    productsToSend = listings;
+
                     // Gemini'a göndermek için veriyi sadeleştir
                     functionResult = {
                         bulunan_ilanlar: listings.map((l: any) => ({
@@ -187,7 +206,10 @@ serve(async (req: Request) => {
             finalResponseText = content?.parts?.[0]?.text || "Cevap alınamadı.";
         }
 
-        return new Response(JSON.stringify({ text: finalResponseText }), {
+        return new Response(JSON.stringify({
+            text: finalResponseText,
+            products: productsToSend
+        }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
