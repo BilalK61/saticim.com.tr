@@ -403,6 +403,9 @@ const AiAssistantPage = () => {
 
                 {/* Sağ Panel - Geçmiş (Sabit, scroll yok) */}
                 <div className="hidden lg:flex lg:w-1/5 flex-col bg-gray-100 border-l border-gray-200" style={{ height: '100%', overflow: 'hidden' }}>
+                    <div className="px-5 pt-4 pb-3 border-b border-gray-200" style={{ flexShrink: 0 }}>
+                        <h3 className="font-semibold text-gray-800">Sohbetler</h3>
+                    </div>
                     <div className="flex-1 overflow-y-auto p-3 space-y-2">
                         {!user ? (
                             <p className="text-gray-400 text-sm text-center py-6">Sohbet geçmişi için giriş yapın</p>

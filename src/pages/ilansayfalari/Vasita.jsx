@@ -925,29 +925,31 @@ const Vasita = () => {
                             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
                         </div>
                     ) : listings.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="flex flex-col gap-4">
                             {listings.map(listing => (
                                 <a key={listing.id} href={`/ilan/${listing.id}`} className="block group">
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
-                                        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col sm:flex-row">
+                                        <div className="relative w-full sm:w-64 h-48 sm:h-auto flex-shrink-0 bg-gray-100 overflow-hidden">
                                             <img
                                                 src={listing.images && listing.images[0] ? listing.images[0] : 'https://placehold.co/400x300?text=Resim+Yok'}
                                                 alt={listing.title}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                                             />
-                                            <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                                                <MapPin size={12} />
-                                                {listing.cities?.name} / {listing.districts?.name}
-                                            </div>
                                         </div>
-                                        <div className="p-4">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition">
+                                        <div className="p-4 flex-1 flex flex-col justify-between">
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition mb-2">
                                                     {listing.title}
                                                 </h3>
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                                                    <MapPin size={14} className="text-gray-400" />
+                                                    <span>{listing.cities?.name} / {listing.districts?.name}</span>
+                                                </div>
                                             </div>
-                                            <div className="text-xl font-bold text-blue-600 mb-3">
-                                                {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
+                                            <div className="flex items-center justify-between mt-3">
+                                                <div className="text-xl font-bold text-blue-600">
+                                                    {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

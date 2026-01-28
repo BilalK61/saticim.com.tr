@@ -334,7 +334,7 @@ const ProfilPage = () => {
                                 </button>
                                 <hr className="my-2 border-gray-100" />
                                 <button
-                                    onClick={() => { signOut(); navigate('/'); }}
+                                    onClick={() => { signOut(); navigate('/login'); }}
                                     className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition"
                                 >
                                     <LogOut size={18} /> Çıkış Yap

@@ -287,11 +287,11 @@ const IsIlanlari = () => {
                             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
                         </div>
                     ) : listings.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="flex flex-col gap-4">
                             {listings.map(l => (
                                 <a key={l.id} href={`/ilan/${l.id}`} className="block group">
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
-                                        <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
+                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col sm:flex-row">
+                                        <div className="relative w-full sm:w-64 h-48 sm:h-auto flex-shrink-0 overflow-hidden bg-gray-50 flex items-center justify-center">
                                             {l.images && l.images.length > 0 ? (
                                                 <img
                                                     src={l.images[0]}
@@ -301,28 +301,32 @@ const IsIlanlari = () => {
                                             ) : (
                                                 <Briefcase size={64} className="text-blue-200" />
                                             )}
-                                            <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                                                <MapPin size={12} />
-                                                {l.cities?.name} / {l.districts?.name}
-                                            </div>
                                             {l.details?.workingModel && (
                                                 <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
                                                     {l.details.workingModel}
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="p-4">
-                                            <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition mb-2">
-                                                {l.title}
-                                            </h3>
-                                            <div className="text-xl font-bold text-blue-600 mb-3">
-                                                {l.price > 0 ? `${new Intl.NumberFormat('tr-TR').format(l.price)} TL` : 'Belirtilmedi'}
+                                        <div className="p-4 flex-1 flex flex-col justify-between">
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900 text-lg group-hover:text-blue-600 transition mb-2">
+                                                    {l.title}
+                                                </h3>
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                                                    <MapPin size={14} className="text-gray-400" />
+                                                    <span>{l.cities?.name} / {l.districts?.name}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm text-gray-500">
+                                                    <span>{l.details?.sector || 'Sektör Belirtilmedi'}</span>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                                                <span>{l.details?.sector || 'Sektör Belirtilmedi'}</span>
-                                            </div>
-                                            <div className="text-xs text-gray-400 text-right">
-                                                {new Date(l.created_at).toLocaleDateString('tr-TR')}
+                                            <div className="flex items-center justify-between mt-3">
+                                                <div className="text-xl font-bold text-blue-600">
+                                                    {l.price > 0 ? `${new Intl.NumberFormat('tr-TR').format(l.price)} TL` : 'Belirtilmedi'}
+                                                </div>
+                                                <div className="text-xs text-gray-400">
+                                                    {new Date(l.created_at).toLocaleDateString('tr-TR')}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
