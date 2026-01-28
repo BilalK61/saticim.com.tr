@@ -397,11 +397,36 @@ const Vasita = () => {
                 (districtsData || []).forEach(d => districtsMap[d.id] = d.name);
             }
 
+            // Fetch Make/Model/Package Names
+            const makeIds = [...new Set(finalData.map(l => l.details?.make_id).filter(Boolean))];
+            const modelIds = [...new Set(finalData.map(l => l.details?.model_id).filter(Boolean))];
+            const packageIds = [...new Set(finalData.map(l => l.details?.package_id).filter(Boolean))];
+
+            let makesMap = {};
+            let modelsMap = {};
+            let packagesMap = {};
+
+            if (makeIds.length > 0) {
+                const { data } = await supabase.from('vehicle_makes').select('id, name').in('id', makeIds);
+                (data || []).forEach(m => makesMap[m.id] = m.name);
+            }
+            if (modelIds.length > 0) {
+                const { data } = await supabase.from('vehicle_models').select('id, name').in('id', modelIds);
+                (data || []).forEach(m => modelsMap[m.id] = m.name);
+            }
+            if (packageIds.length > 0) {
+                const { data } = await supabase.from('vehicle_packages').select('id, name').in('id', packageIds);
+                (data || []).forEach(p => packagesMap[p.id] = p.name);
+            }
+
             // 3. Merge Data
             const mergedListings = finalData.map(listing => ({
                 ...listing,
                 cities: { name: citiesMap[listing.city_id] || '' },
-                districts: { name: districtsMap[listing.district_id] || '' }
+                districts: { name: districtsMap[listing.district_id] || '' },
+                makeName: makesMap[listing.details?.make_id] || '-',
+                modelName: modelsMap[listing.details?.model_id] || '-',
+                packageName: packagesMap[listing.details?.package_id] || '-'
             }));
 
             setListings(mergedListings);
@@ -970,17 +995,19 @@ const Vasita = () => {
                             <div className="hidden lg:grid lg:grid-cols-12 gap-4 px-4 py-3 bg-gray-100 rounded-lg text-sm font-semibold text-gray-600">
                                 <div className="col-span-1">Foto</div>
                                 <div className="col-span-3 pl-4">İlan Başlığı</div>
+                                <div className="col-span-1 text-center">Marka</div>
+                                <div className="col-span-1 text-center">Model</div>
+                                <div className="col-span-1 text-center">Paket</div>
                                 <div className="col-span-1 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('year')}>
                                     Yıl <ArrowUpDown size={14} className={sortConfig.key === 'year' ? 'text-blue-600' : ''} />
                                 </div>
-                                <div className="col-span-2 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('km')}>
+                                <div className="col-span-1 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('km')}>
                                     KM <ArrowUpDown size={14} className={sortConfig.key === 'km' ? 'text-blue-600' : ''} />
                                 </div>
-                                <div className="col-span-1 text-center">Renk</div>
                                 <div className="col-span-2 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('price')}>
                                     Fiyat <ArrowUpDown size={14} className={sortConfig.key === 'price' ? 'text-blue-600' : ''} />
                                 </div>
-                                <div className="col-span-2 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('date')}>
+                                <div className="col-span-1 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('date')}>
                                     Tarih <ArrowUpDown size={14} className={sortConfig.key === 'date' ? 'text-blue-600' : ''} />
                                 </div>
                             </div>
@@ -1008,21 +1035,15 @@ const Vasita = () => {
                                                     <span>{listing.cities?.name}</span>
                                                 </div>
                                             </div>
-                                            <div className="col-span-1 text-center text-sm text-gray-700">
-                                                {listing.details?.year || '-'}
-                                            </div>
-                                            <div className="col-span-2 text-center text-sm text-gray-700">
-                                                {listing.details?.km ? new Intl.NumberFormat('tr-TR').format(listing.details.km) : '-'}
-                                            </div>
-                                            <div className="col-span-1 text-center text-sm text-gray-700">
-                                                {listing.details?.color || '-'}
-                                            </div>
+                                            <div className="col-span-1 text-center text-sm text-gray-700 truncate" title={listing.makeName}>{listing.makeName}</div>
+                                            <div className="col-span-1 text-center text-sm text-gray-700 truncate" title={listing.modelName}>{listing.modelName}</div>
+                                            <div className="col-span-1 text-center text-sm text-gray-700 truncate" title={listing.packageName}>{listing.packageName}</div>
+                                            <div className="col-span-1 text-center text-sm text-gray-700">{listing.details?.year || '-'}</div>
+                                            <div className="col-span-1 text-center text-sm text-gray-700">{listing.details?.km ? new Intl.NumberFormat('tr-TR').format(listing.details.km) : '-'}</div>
                                             <div className="col-span-2 text-center font-bold text-blue-600">
                                                 {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
                                             </div>
-                                            <div className="col-span-2 text-center text-xs text-gray-400">
-                                                {new Date(listing.created_at).toLocaleDateString('tr-TR')}
-                                            </div>
+                                            <div className="col-span-1 text-center text-xs text-gray-400">{new Date(listing.created_at).toLocaleDateString('tr-TR')}</div>
                                         </div>
                                         {/* Mobile View */}
                                         <div className="lg:hidden flex gap-3 p-3">
