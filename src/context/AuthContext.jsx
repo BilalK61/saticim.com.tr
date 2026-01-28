@@ -56,6 +56,7 @@ export const AuthProvider = ({ children }) => {
         signIn: (data) => supabase.auth.signInWithPassword(data),
         signOut: () => supabase.auth.signOut(),
         user,
+        loading,
     };
 
     return (

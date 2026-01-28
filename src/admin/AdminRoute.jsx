@@ -3,7 +3,16 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const AdminRoute = () => {
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
+
+    // Show loading spinner while checking auth
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-100">
+                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     // If not authenticated, redirect to admin login
     if (!user) {
@@ -22,3 +31,4 @@ const AdminRoute = () => {
 };
 
 export default AdminRoute;
+
