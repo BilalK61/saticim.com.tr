@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import Footer from '../../components/Footer';
-import { Search, Filter, Shirt, MapPin, ChevronDown, ChevronUp, SlidersHorizontal, ShoppingBag } from 'lucide-react';
+import { Search, Filter, Shirt, MapPin, ChevronDown, ChevronUp, SlidersHorizontal, ShoppingBag, ArrowUpDown } from 'lucide-react';
 
 const Giyim = () => {
     // Location States
@@ -24,6 +24,16 @@ const Giyim = () => {
 
     // Filter Visibility State
     const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+    // Table sorting state
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
+
+    const handleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
+        }));
+    };
 
     // Applied Filters (Triggered by button)
     const [appliedFilters, setAppliedFilters] = useState({
@@ -143,6 +153,29 @@ const Giyim = () => {
     // Data States
     const [listings, setListings] = useState([]);
     const [loadingListings, setLoadingListings] = useState(false);
+
+    const sortedListings = React.useMemo(() => {
+        if (!sortConfig.key) return listings;
+        return [...listings].sort((a, b) => {
+            let aVal, bVal;
+            switch (sortConfig.key) {
+                case 'price':
+                    aVal = a.price || 0;
+                    bVal = b.price || 0;
+                    break;
+                case 'date':
+                    aVal = new Date(a.created_at).getTime();
+                    bVal = new Date(b.created_at).getTime();
+                    break;
+                default:
+                    return 0;
+            }
+            if (sortConfig.direction === 'asc') {
+                return aVal - bVal;
+            }
+            return bVal - aVal;
+        });
+    }, [listings, sortConfig]);
 
     // Fetch listings when filters change
     useEffect(() => {
@@ -481,51 +514,86 @@ const Giyim = () => {
                         </div>
                     </div>
 
-                    {/* Listings Grid */}
+                    {/* Listings Table */}
                     {loadingListings ? (
                         <div className="flex justify-center py-20">
                             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
                         </div>
                     ) : listings.length > 0 ? (
-                        <div className="flex flex-col gap-4">
-                            {listings.map(listing => (
+                        <div className="flex flex-col gap-2">
+                            {/* Table Header - Desktop Only */}
+                            <div className="hidden lg:grid lg:grid-cols-12 gap-4 px-4 py-3 bg-gray-100 rounded-lg text-sm font-semibold text-gray-600">
+                                <div className="col-span-1">Foto</div>
+                                <div className="col-span-3 pl-4">İlan Başlığı</div>
+                                <div className="col-span-1 text-center">Beden</div>
+                                <div className="col-span-2 text-center">Marka</div>
+                                <div className="col-span-1 text-center">Renk</div>
+                                <div className="col-span-2 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('price')}>
+                                    Fiyat <ArrowUpDown size={14} className={sortConfig.key === 'price' ? 'text-blue-600' : ''} />
+                                </div>
+                                <div className="col-span-2 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('date')}>
+                                    Tarih <ArrowUpDown size={14} className={sortConfig.key === 'date' ? 'text-blue-600' : ''} />
+                                </div>
+                            </div>
+                            {/* Listing Rows */}
+                            {sortedListings.map(listing => (
                                 <a key={listing.id} href={`/ilan/${listing.id}`} className="block group">
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col sm:flex-row">
-                                        <div className="relative w-full sm:w-64 h-48 sm:h-auto flex-shrink-0 bg-gray-100 overflow-hidden">
-                                            <img
-                                                src={listing.images && listing.images[0] ? listing.images[0] : 'https://placehold.co/400x300?text=Resim+Yok'}
-                                                alt={listing.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                                            />
-                                            {listing.details?.size && (
-                                                <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                                    {listing.details.size}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="p-4 flex-1 flex flex-col justify-between">
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition mb-2">
-                                                    {listing.title}
-                                                </h3>
-                                                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                                                    <MapPin size={14} className="text-gray-400" />
-                                                    <span>{listing.cities?.name} / {listing.districts?.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                    <span>{listing.details?.type}</span>
-                                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                    <span>{listing.details?.color}</span>
-                                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                    <span>{listing.details?.brand}</span>
+                                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-blue-300 transition">
+                                        {/* Desktop View */}
+                                        <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-center px-4 py-3">
+                                            <div className="col-span-1">
+                                                <div className="w-24 h-16 rounded-lg overflow-hidden bg-gray-100">
+                                                    <img
+                                                        src={listing.images && listing.images[0] ? listing.images[0] : 'https://placehold.co/100x75?text=Yok'}
+                                                        alt={listing.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                                    />
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between mt-3">
-                                                <div className="text-xl font-bold text-blue-600">
-                                                    {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
+                                            <div className="col-span-3 pl-4">
+                                                <h3 className="font-medium text-gray-900 text-sm line-clamp-1 group-hover:text-blue-600 transition">
+                                                    {listing.title}
+                                                </h3>
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                                    <MapPin size={10} />
+                                                    <span>{listing.cities?.name}</span>
                                                 </div>
-                                                <div className="text-xs text-gray-400">
-                                                    {new Date(listing.created_at).toLocaleDateString('tr-TR')}
+                                            </div>
+                                            <div className="col-span-1 text-center text-sm text-gray-700">
+                                                {listing.details?.size || '-'}
+                                            </div>
+                                            <div className="col-span-2 text-center text-sm text-gray-700">
+                                                {listing.details?.brand || '-'}
+                                            </div>
+                                            <div className="col-span-1 text-center text-sm text-gray-700">
+                                                {listing.details?.color || '-'}
+                                            </div>
+                                            <div className="col-span-2 text-center font-bold text-blue-600">
+                                                {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
+                                            </div>
+                                            <div className="col-span-2 text-center text-xs text-gray-400">
+                                                {new Date(listing.created_at).toLocaleDateString('tr-TR')}
+                                            </div>
+                                        </div>
+                                        {/* Mobile View */}
+                                        <div className="lg:hidden flex gap-3 p-3">
+                                            <div className="w-24 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                                <img
+                                                    src={listing.images && listing.images[0] ? listing.images[0] : 'https://placehold.co/100x75?text=Yok'}
+                                                    alt={listing.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-medium text-gray-900 text-sm line-clamp-1">{listing.title}</h3>
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                                    <span>{listing.details?.size}</span>
+                                                    <span>•</span>
+                                                    <span>{listing.details?.brand}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between mt-2">
+                                                    <span className="font-bold text-blue-600">{new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}</span>
+                                                    <span className="text-xs text-gray-400">{new Date(listing.created_at).toLocaleDateString('tr-TR')}</span>
                                                 </div>
                                             </div>
                                         </div>

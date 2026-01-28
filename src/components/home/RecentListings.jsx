@@ -59,14 +59,14 @@ const RecentListings = ({ listings, loading }) => {
                                     className="group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                                 >
                                     <div className="relative h-48 bg-gray-200 overflow-hidden">
-                                        {listing.image_urls && listing.image_urls.length > 0 ? (
+                                        {listing.images && listing.images.length > 0 ? (
                                             <img
-                                                src={listing.image_urls[0]}
+                                                src={listing.images[0]}
                                                 alt={listing.title}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
                                                 <ShoppingBag className="text-gray-400" size={48} />
                                             </div>
                                         )}

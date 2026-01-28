@@ -1,59 +1,51 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Home, Car, Laptop, Briefcase, Sofa, ShoppingBag, Baby, Sparkles, Book, Dumbbell, Palette, Wrench } from 'lucide-react';
 
 const CategoriesSection = () => {
     const categories = [
-        { name: 'Emlak', icon: Home, path: '/emlak', color: 'from-blue-500 to-cyan-500' },
-        { name: 'Vasıta', icon: Car, path: '/vasita', color: 'from-purple-500 to-pink-500' },
-        { name: 'Elektronik', icon: Laptop, path: '/elektronik', color: 'from-orange-500 to-red-500' },
-        { name: 'İş İlanları', icon: Briefcase, path: '/is-ilanlari', color: 'from-green-500 to-emerald-500' },
-        { name: 'Ev & Eşya', icon: Sofa, path: '/ev-esyalari', color: 'from-indigo-500 to-blue-500' },
-        { name: 'Giyim', icon: ShoppingBag, path: '/giyim', color: 'from-pink-500 to-rose-500' },
-        { name: 'Anne & Bebek', icon: Baby, path: '/anne-bebek', color: 'from-yellow-500 to-orange-500' },
-        { name: 'Kozmetik', icon: Sparkles, path: '/kozmetik', color: 'from-purple-500 to-violet-500' },
-        { name: 'Kitap & Dergi', icon: Book, path: '/kitap-dergi', color: 'from-teal-500 to-cyan-500' },
-        { name: 'Spor', icon: Dumbbell, path: '/spor', color: 'from-red-500 to-orange-500' },
-        { name: 'Hobi & Oyun', icon: Palette, path: '/hobi-oyun', color: 'from-blue-500 to-purple-500' },
-        { name: 'Hizmetler', icon: Wrench, path: '/hizmetler', color: 'from-gray-600 to-gray-800' },
+        { name: 'Emlak', icon: Home, path: '/emlak', color: 'bg-blue-500' },
+        { name: 'Vasıta', icon: Car, path: '/vasita', color: 'bg-purple-500' },
+        { name: 'Elektronik', icon: Laptop, path: '/elektronik', color: 'bg-orange-500' },
+        { name: 'İş İlanları', icon: Briefcase, path: '/is-ilanlari', color: 'bg-green-500' },
+        { name: 'Ev & Eşya', icon: Sofa, path: '/ev-esyalari', color: 'bg-indigo-500' },
+        { name: 'Giyim', icon: ShoppingBag, path: '/giyim', color: 'bg-pink-500' },
+        { name: 'Anne & Bebek', icon: Baby, path: '/anne-bebek', color: 'bg-yellow-500' },
+        { name: 'Kozmetik', icon: Sparkles, path: '/kozmetik', color: 'bg-violet-500' },
+        { name: 'Kitap & Dergi', icon: Book, path: '/kitap-dergi', color: 'bg-teal-500' },
+        { name: 'Spor', icon: Dumbbell, path: '/spor', color: 'bg-red-500' },
+        { name: 'Hobi & Oyun', icon: Palette, path: '/hobi-oyun', color: 'bg-cyan-500' },
+        { name: 'Hizmetler', icon: Wrench, path: '/hizmetler', color: 'bg-gray-600' },
     ];
 
     return (
-        <section className="py-16 bg-gray-50">
+        <section className="py-12 bg-gray-50">
             <div className="container mx-auto max-w-7xl px-4">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                <div className="text-center mb-8">
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                         Kategoriler
                     </h2>
-                    <p className="text-lg text-gray-600">
-                        İhtiyacınız olan kategoriyi seçin ve alışverişe başlayın
+                    <p className="text-gray-600">
+                        İhtiyacınız olan kategoriyi seçin
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                    {categories.map((category, index) => (
-                        <motion.div
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+                    {categories.map((category) => (
+                        <Link
                             key={category.path}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: index * 0.05 }}
+                            to={category.path}
+                            className="group block"
                         >
-                            <Link
-                                to={category.path}
-                                className="group block"
-                            >
-                                <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-transparent hover:-translate-y-1">
-                                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform`}>
-                                        <category.icon className="text-white" size={28} />
-                                    </div>
-                                    <h3 className="text-center font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                                        {category.name}
-                                    </h3>
+                            <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition border border-gray-100 text-center">
+                                <div className={`w-12 h-12 rounded-lg ${category.color} flex items-center justify-center mb-3 mx-auto`}>
+                                    <category.icon className="text-white" size={24} />
                                 </div>
-                            </Link>
-                        </motion.div>
+                                <h3 className="text-sm font-medium text-gray-800 group-hover:text-blue-600 transition">
+                                    {category.name}
+                                </h3>
+                            </div>
+                        </Link>
                     ))}
                 </div>
             </div>

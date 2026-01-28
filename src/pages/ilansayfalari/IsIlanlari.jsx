@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import Footer from '../../components/Footer';
-import { Search, Filter, Briefcase, MapPin, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, Briefcase, MapPin, ChevronDown, ChevronUp, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 
 const IsIlanlari = () => {
     const [cities, setCities] = useState([]);
@@ -15,6 +15,16 @@ const IsIlanlari = () => {
     const [keyword, setKeyword] = useState('');
 
     const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+    // Table sorting state
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
+
+    const handleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
+        }));
+    };
 
     const [appliedFilters, setAppliedFilters] = useState({
         selectedCity: '',
@@ -32,6 +42,29 @@ const IsIlanlari = () => {
 
     const [listings, setListings] = useState([]);
     const [loadingListings, setLoadingListings] = useState(false);
+
+    const sortedListings = React.useMemo(() => {
+        if (!sortConfig.key) return listings;
+        return [...listings].sort((a, b) => {
+            let aVal, bVal;
+            switch (sortConfig.key) {
+                case 'price':
+                    aVal = a.price || 0;
+                    bVal = b.price || 0;
+                    break;
+                case 'date':
+                    aVal = new Date(a.created_at).getTime();
+                    bVal = new Date(b.created_at).getTime();
+                    break;
+                default:
+                    return 0;
+            }
+            if (sortConfig.direction === 'asc') {
+                return aVal - bVal;
+            }
+            return bVal - aVal;
+        });
+    }, [listings, sortConfig]);
 
     useEffect(() => { fetchCities(); }, []);
 
@@ -281,51 +314,71 @@ const IsIlanlari = () => {
                             </select>
                         </div>
                     </div>
-
+                    {/* Listings Table */}
                     {loadingListings ? (
                         <div className="flex justify-center py-20">
                             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
                         </div>
                     ) : listings.length > 0 ? (
-                        <div className="flex flex-col gap-4">
-                            {listings.map(l => (
+                        <div className="flex flex-col gap-2">
+                            {/* Table Header - Desktop Only */}
+                            <div className="hidden lg:grid lg:grid-cols-12 gap-4 px-4 py-3 bg-gray-100 rounded-lg text-sm font-semibold text-gray-600">
+                                <div className="col-span-1">Foto</div>
+                                <div className="col-span-3 pl-4">İlan Başlığı</div>
+                                <div className="col-span-2 text-center">Sektör</div>
+                                <div className="col-span-2 text-center">Çalışma Şekli</div>
+                                <div className="col-span-2 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('price')}>
+                                    Maaş <ArrowUpDown size={14} className={sortConfig.key === 'price' ? 'text-blue-600' : ''} />
+                                </div>
+                                <div className="col-span-2 text-center cursor-pointer hover:text-blue-600 flex items-center justify-center gap-1" onClick={() => handleSort('date')}>
+                                    Tarih <ArrowUpDown size={14} className={sortConfig.key === 'date' ? 'text-blue-600' : ''} />
+                                </div>
+                            </div>
+                            {/* Listing Rows */}
+                            {sortedListings.map(l => (
                                 <a key={l.id} href={`/ilan/${l.id}`} className="block group">
-                                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition flex flex-col sm:flex-row">
-                                        <div className="relative w-full sm:w-64 h-48 sm:h-auto flex-shrink-0 overflow-hidden bg-gray-50 flex items-center justify-center">
-                                            {l.images && l.images.length > 0 ? (
-                                                <img
-                                                    src={l.images[0]}
-                                                    alt={l.title}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                                                />
-                                            ) : (
-                                                <Briefcase size={64} className="text-blue-200" />
-                                            )}
-                                            {l.details?.workingModel && (
-                                                <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                                    {l.details.workingModel}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="p-4 flex-1 flex flex-col justify-between">
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900 text-lg group-hover:text-blue-600 transition mb-2">
-                                                    {l.title}
-                                                </h3>
-                                                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                                                    <MapPin size={14} className="text-gray-400" />
-                                                    <span>{l.cities?.name} / {l.districts?.name}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                                    <span>{l.details?.sector || 'Sektör Belirtilmedi'}</span>
+                                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-blue-300 transition">
+                                        {/* Desktop View */}
+                                        <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-center px-4 py-3">
+                                            <div className="col-span-1">
+                                                <div className="w-24 h-16 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                                                    {l.images && l.images.length > 0 ? (
+                                                        <img src={l.images[0]} alt={l.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                                                    ) : (
+                                                        <Briefcase size={20} className="text-blue-300" />
+                                                    )}
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between mt-3">
-                                                <div className="text-xl font-bold text-blue-600">
-                                                    {l.price > 0 ? `${new Intl.NumberFormat('tr-TR').format(l.price)} TL` : 'Belirtilmedi'}
+                                            <div className="col-span-3 pl-4">
+                                                <h3 className="font-semibold text-gray-900 text-base line-clamp-1 group-hover:text-blue-600 transition">{l.title}</h3>
+                                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                                                    <MapPin size={10} />
+                                                    <span>{l.cities?.name}</span>
                                                 </div>
-                                                <div className="text-xs text-gray-400">
-                                                    {new Date(l.created_at).toLocaleDateString('tr-TR')}
+                                            </div>
+                                            <div className="col-span-2 text-center text-sm text-gray-700">{l.details?.sector || '-'}</div>
+                                            <div className="col-span-2 text-center text-sm text-gray-700">{l.details?.workingModel || '-'}</div>
+                                            <div className="col-span-2 text-center font-bold text-blue-600">{l.price > 0 ? `${new Intl.NumberFormat('tr-TR').format(l.price)} TL` : '-'}</div>
+                                            <div className="col-span-2 text-center text-xs text-gray-400">{new Date(l.created_at).toLocaleDateString('tr-TR')}</div>
+                                        </div>
+                                        {/* Mobile View */}
+                                        <div className="lg:hidden flex gap-3 p-3">
+                                            <div className="w-28 h-24 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0 flex items-center justify-center">
+                                                {l.images && l.images.length > 0 ? (
+                                                    <img src={l.images[0]} alt={l.title} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Briefcase size={32} className="text-blue-200" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-medium text-gray-900 text-sm line-clamp-1">{l.title}</h3>
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                                    <span>{l.details?.sector || 'Sektör Belirtilmedi'}</span>
+                                                    {l.details?.workingModel && <><span>•</span><span>{l.details.workingModel}</span></>}
+                                                </div>
+                                                <div className="flex items-center justify-between mt-2">
+                                                    <span className="font-bold text-blue-600">{l.price > 0 ? `${new Intl.NumberFormat('tr-TR').format(l.price)} TL` : 'Belirtilmedi'}</span>
+                                                    <span className="text-xs text-gray-400">{new Date(l.created_at).toLocaleDateString('tr-TR')}</span>
                                                 </div>
                                             </div>
                                         </div>

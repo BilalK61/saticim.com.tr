@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, ChevronDown, Car, Smartphone, Briefcase, MoreHorizontal, Search, UserCircle, UserPlus, LogOut, MessageCircle, Bot, Heart, Plus, Menu, X, Building2, Shirt, Dumbbell, Sofa, Gamepad2, Bell, ArrowLeft } from 'lucide-react';
+import { Home, ChevronDown, Car, Smartphone, Briefcase, MoreHorizontal, Search, UserCircle, UserPlus, LogOut, MessageCircle, Bot, Heart, Plus, Menu, X, Building2, Shirt, Dumbbell, Sofa, Gamepad2, Bell, ArrowLeft, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -370,6 +370,17 @@ const Navbar = () => {
                                 <div className="text-xs text-gray-400">Bildirimlerini gör</div>
                               </div>
                             </button>
+                            {user?.role === 'admin' && (
+                              <button onClick={() => { navigate('/admin'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors">
+                                <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center">
+                                  <Shield className="w-5 h-5 text-purple-600" />
+                                </div>
+                                <div className="text-left">
+                                  <div className="font-medium text-sm">Admin Paneli</div>
+                                  <div className="text-xs text-gray-400">Yönetim paneline git</div>
+                                </div>
+                              </button>
+                            )}
                             <div className="my-2 border-t border-gray-100"></div>
                             <button onClick={() => { setShowLogoutModal(true); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 text-red-600 transition-colors">
                               <div className="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center">
