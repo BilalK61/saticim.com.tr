@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Home, ChevronDown, Car, Smartphone, Briefcase, MoreHorizontal, Search, UserCircle, UserPlus, LogOut, MessageCircle, Bot, Heart, Plus, Menu, X, Building2, Shirt, Dumbbell, Sofa, Gamepad2, Bell, ArrowLeft, Shield } from 'lucide-react';
+import { Home, ChevronDown, Car, Smartphone, Briefcase, MoreHorizontal, Search, UserCircle, UserPlus, LogOut, MessageCircle, Bot, Heart, Plus, Menu, X, Building2, Shirt, Dumbbell, Sofa, Gamepad2, Bell, ArrowLeft, Shield, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
@@ -232,9 +232,13 @@ const Navbar = () => {
                     <UserCircle className="w-5 h-5 text-gray-500" />
                   )}
                 </div>
-                <span className="text-sm font-medium text-gray-700 hidden lg:block max-w-[100px] truncate">
-                  {user ? (user.username || user.email?.split('@')[0]) : 'Misafir'}
-                </span>
+                <div className="hidden lg:flex items-center gap-1 max-w-[140px]">
+                  <span className="text-sm font-medium text-gray-700 truncate">
+                    {user ? (user.username || user.email?.split('@')[0]) : 'Misafir'}
+                  </span>
+                  {user?.role === 'admin' && <CheckCircle size={14} className="text-green-500 shrink-0" />}
+                  {user?.role === 'moderator' && <CheckCircle size={14} className="text-blue-500 shrink-0" />}
+                </div>
                 <ChevronDown className="w-4 h-4 text-gray-400 hidden lg:block" />
               </button>
 
@@ -260,8 +264,10 @@ const Navbar = () => {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-gray-900 truncate">
-                            {user ? (user.full_name || user.username || 'Kullanıcı') : 'Misafir'}
+                          <div className="font-semibold text-gray-900 truncate flex items-center gap-1">
+                            <span className="truncate">{user ? (user.full_name || user.username || 'Kullanıcı') : 'Misafir'}</span>
+                            {user?.role === 'admin' && <CheckCircle size={14} className="text-green-500 shrink-0" />}
+                            {user?.role === 'moderator' && <CheckCircle size={14} className="text-blue-500 shrink-0" />}
                           </div>
                           <div className="text-xs text-gray-500 truncate">
                             {user ? user.email : 'Henüz giriş yapmadınız'}
@@ -370,7 +376,7 @@ const Navbar = () => {
                                 <div className="text-xs text-gray-400">Bildirimlerini gör</div>
                               </div>
                             </button>
-                            {user?.role === 'admin' && (
+                            {(user?.role === 'admin' || user?.role === 'moderator') && (
                               <button onClick={() => { navigate('/admin'); setShowProfileMenu(false); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-purple-50 text-purple-600 transition-colors">
                                 <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center">
                                   <Shield className="w-5 h-5 text-purple-600" />
@@ -637,6 +643,9 @@ const Navbar = () => {
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-gray-900 truncate text-sm">
                           {user.full_name || user.username || 'Kullanıcı'}
+                          {user.full_name || user.username || 'Kullanıcı'}
+                          {user.role === 'admin' && <CheckCircle size={14} className="inline ml-1 text-green-500" />}
+                          {user.role === 'moderator' && <CheckCircle size={14} className="inline ml-1 text-blue-500" />}
                         </div>
                         <div className="text-xs text-gray-500 truncate">{user.email}</div>
                       </div>

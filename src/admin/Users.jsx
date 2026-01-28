@@ -1,14 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useAuth } from '../context/AuthContext';
 import { Search, MoreVertical, Trash2, Mail, Calendar, User, Eye, UserCog, Ban, CheckCircle, X } from 'lucide-react';
+import Modal from '../components/Modal';
 
 const Users = () => {
+    const { user: currentUser } = useAuth();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [openDropdown, setOpenDropdown] = useState(null);
     const [banModal, setBanModal] = useState({ open: false, user: null });
     const [banReason, setBanReason] = useState('');
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        confirmText: 'Tamam',
+        cancelText: 'İptal',
+        showCancel: false,
+        onConfirm: null
+    });
+
+    const showModal = ({ title, message, type = 'info', confirmText = 'Tamam', cancelText = 'İptal', showCancel = false, onConfirm = null }) => {
+        setModalConfig({
+            isOpen: true,
+            title,
+            message,
+            type,
+            confirmText,
+            cancelText,
+            showCancel,
+            onConfirm
+        });
+    };
+
+    const closeModal = () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+    };
 
     useEffect(() => {
         fetchUsers();
@@ -38,26 +68,64 @@ const Users = () => {
     };
 
     const handleDeleteUser = async (id) => {
-        if (!window.confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) return;
-
-        try {
-            const { error } = await supabase
-                .from('profiles')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
-            setUsers(users.filter(u => u.id !== id));
-            alert('Kullanıcı başarıyla silindi.');
-        } catch (error) {
-            console.error('Silme hatası:', error.message);
-            alert('Kullanıcı silinirken bir hata oluştu. Yetkiniz olmayabilir.');
+        // Moderator Safety Check
+        const targetUser = users.find(u => u.id === id);
+        if (currentUser?.role === 'moderator' && targetUser?.role === 'admin') {
+            showModal({
+                title: 'Yetkisiz İşlem',
+                message: 'Moderatörler adminleri silemez!',
+                type: 'error'
+            });
+            return;
         }
+
+        showModal({
+            title: 'Kullanıcıyı Sil',
+            message: 'Bu kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.',
+            type: 'warning',
+            confirmText: 'Sil',
+            cancelText: 'Vazgeç',
+            showCancel: true,
+            onConfirm: async () => {
+                try {
+                    const { error } = await supabase
+                        .from('profiles')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    setUsers(users.filter(u => u.id !== id));
+                    showModal({
+                        title: 'Başarılı',
+                        message: 'Kullanıcı başarıyla silindi.',
+                        type: 'success'
+                    });
+                } catch (error) {
+                    console.error('Silme hatası:', error.message);
+                    showModal({
+                        title: 'Hata',
+                        message: 'Kullanıcı silinirken bir hata oluştu. Yetkiniz olmayabilir.',
+                        type: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const handleBanUser = async () => {
         const { user } = banModal;
         if (!user) return;
+
+        // Moderator Safety Check
+        if (currentUser?.role === 'moderator' && user.role === 'admin') {
+            showModal({
+                title: 'Yetkisiz İşlem',
+                message: 'Moderatörler adminleri banlayamaz!',
+                type: 'error'
+            });
+            setBanModal({ open: false, user: null });
+            return;
+        }
 
         try {
             const { error } = await supabase
@@ -78,72 +146,139 @@ const Users = () => {
             ));
             setBanModal({ open: false, user: null });
             setBanReason('');
-            alert('Kullanıcı başarıyla banlandı.');
+            showModal({
+                title: 'Başarılı',
+                message: 'Kullanıcı başarıyla banlandı.',
+                type: 'success'
+            });
         } catch (error) {
             console.error('Ban hatası:', error);
-            console.error('Error message:', error.message);
-            console.error('Error details:', error.details);
-            console.error('Error hint:', error.hint);
-            console.error('Error code:', error.code);
-            alert(`Kullanıcı banlanırken bir hata oluştu: ${error.message || 'Bilinmeyen hata'}`);
+            showModal({
+                title: 'Hata',
+                message: `Kullanıcı banlanırken bir hata oluştu: ${error.message || 'Bilinmeyen hata'}`,
+                type: 'error'
+            });
         }
     };
 
     const handleUnbanUser = async (userId) => {
-        if (!window.confirm('Bu kullanıcının banını kaldırmak istediğinizden emin misiniz?')) return;
-
-        try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    is_banned: false,
-                    ban_reason: null,
-                    banned_at: null
-                })
-                .eq('id', userId);
-
-            if (error) throw error;
-
-            setUsers(users.map(u =>
-                u.id === userId
-                    ? { ...u, is_banned: false, ban_reason: null, banned_at: null }
-                    : u
-            ));
-            alert('Kullanıcının banı başarıyla kaldırıldı.');
-        } catch (error) {
-            console.error('Unban hatası:', error);
-            console.error('Error message:', error.message);
-            console.error('Error details:', error.details);
-            console.error('Error hint:', error.hint);
-            console.error('Error code:', error.code);
-            alert(`Ban kaldırılırken bir hata oluştu: ${error.message || 'Bilinmeyen hata'}`);
+        // Moderator Safety Check
+        const targetUser = users.find(u => u.id === userId);
+        if (currentUser?.role === 'moderator' && targetUser?.role === 'admin') {
+            showModal({
+                title: 'Yetkisiz İşlem',
+                message: 'Moderatörler adminlerin banını kaldıramaz!',
+                type: 'error'
+            });
+            return;
         }
+
+        showModal({
+            title: 'Banı Kaldır',
+            message: 'Bu kullanıcının banını kaldırmak istediğinizden emin misiniz?',
+            type: 'info',
+            confirmText: 'Kaldır',
+            cancelText: 'Vazgeç',
+            showCancel: true,
+            onConfirm: async () => {
+                try {
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({
+                            is_banned: false,
+                            ban_reason: null,
+                            banned_at: null
+                        })
+                        .eq('id', userId);
+
+                    if (error) throw error;
+
+                    setUsers(users.map(u =>
+                        u.id === userId
+                            ? { ...u, is_banned: false, ban_reason: null, banned_at: null }
+                            : u
+                    ));
+                    showModal({
+                        title: 'Başarılı',
+                        message: 'Kullanıcının banı başarıyla kaldırıldı.',
+                        type: 'success'
+                    });
+                } catch (error) {
+                    console.error('Unban hatası:', error);
+                    showModal({
+                        title: 'Hata',
+                        message: `Ban kaldırılırken bir hata oluştu: ${error.message || 'Bilinmeyen hata'}`,
+                        type: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const handleChangeRole = async (userId, newRole) => {
-        if (!window.confirm(`Kullanıcının rolünü "${newRole}" olarak değiştirmek istediğinizden emin misiniz?`)) return;
-
-        try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({ role: newRole })
-                .eq('id', userId);
-
-            if (error) throw error;
-
-            setUsers(users.map(u =>
-                u.id === userId ? { ...u, role: newRole } : u
-            ));
-            alert(`Kullanıcının rolü "${newRole}" olarak güncellendi.`);
-        } catch (error) {
-            console.error('Rol değiştirme hatası:', error.message);
-            alert('Rol değiştirilirken bir hata oluştu.');
+        // Moderator Safety Check
+        const targetUser = users.find(u => u.id === userId);
+        if (currentUser?.role === 'moderator') {
+            if (targetUser?.role === 'admin') {
+                showModal({
+                    title: 'Yetkisiz İşlem',
+                    message: 'Moderatörler adminlerin rolünü değiştiremez!',
+                    type: 'error'
+                });
+                return;
+            }
+            if (newRole === 'admin') {
+                showModal({
+                    title: 'Yetkisiz İşlem',
+                    message: 'Moderatörler kullanıcıları admin yapamaz!',
+                    type: 'error'
+                });
+                return;
+            }
         }
+
+        showModal({
+            title: 'Rol Değiştir',
+            message: `Kullanıcının rolünü "${newRole}" olarak değiştirmek istediğinizden emin misiniz?`,
+            type: 'warning',
+            confirmText: 'Değiştir',
+            cancelText: 'Vazgeç',
+            showCancel: true,
+            onConfirm: async () => {
+                try {
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({ role: newRole })
+                        .eq('id', userId);
+
+                    if (error) throw error;
+
+                    setUsers(users.map(u =>
+                        u.id === userId ? { ...u, role: newRole } : u
+                    ));
+                    showModal({
+                        title: 'Başarılı',
+                        message: `Kullanıcının rolü "${newRole}" olarak güncellendi.`,
+                        type: 'success'
+                    });
+                } catch (error) {
+                    console.error('Rol değiştirme hatası:', error.message);
+                    showModal({
+                        title: 'Hata',
+                        message: 'Rol değiştirilirken bir hata oluştu.',
+                        type: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const handleSendEmail = (user) => {
-        // Placeholder - Bu özellik daha sonra genişletilebilir
-        alert(`${user.username || user.full_name} kullanıcısına e-posta gönderme özelliği yakında eklenecek.`);
+        showModal({
+            title: 'Yakında',
+            message: `${user.username || user.full_name} kullanıcısına e-posta gönderme özelliği yakında eklenecek.`,
+            type: 'info'
+        });
     };
 
     const handleViewProfile = (userId) => {
@@ -169,6 +304,8 @@ const Users = () => {
         const badge = badges[role] || badges.user;
         return (
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${badge.class} ml-2`}>
+                {role === 'admin' && <CheckCircle size={12} className="mr-1 text-green-600" />}
+                {role === 'moderator' && <CheckCircle size={12} className="mr-1 text-blue-600" />}
                 {badge.text}
             </span>
         );
@@ -417,6 +554,18 @@ const Users = () => {
                     </div>
                 </div>
             )}
+            {/* General Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                showCancel={modalConfig.showCancel}
+                onConfirm={modalConfig.onConfirm}
+            />
         </div>
     );
 };

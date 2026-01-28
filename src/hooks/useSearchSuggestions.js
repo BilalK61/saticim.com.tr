@@ -23,16 +23,30 @@ export const useSearchSuggestions = (query, minLength = 2) => {
         const timer = setTimeout(async () => {
             setLoading(true);
             try {
-                const { data, error } = await supabase
-                    .from('listings')
-                    .select('id, title, price, currency, images, category, cities(name)')
-                    .eq('status', 'approved')
-                    .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
-                    .order('created_at', { ascending: false })
-                    .limit(8);
+                // Parallel search: Listings and Profiles
+                const [listingsResponse, profilesResponse] = await Promise.all([
+                    supabase
+                        .from('listings')
+                        .select('id, title, price, currency, images, category, cities(name)')
+                        .eq('status', 'approved')
+                        .or(`title.ilike.%${query}%,description.ilike.%${query}%`)
+                        .order('created_at', { ascending: false })
+                        .limit(5),
 
-                if (error) throw error;
-                setSuggestions(data || []);
+                    supabase
+                        .from('profiles')
+                        .select('id, username, full_name, avatar_url')
+                        .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+                        .limit(3)
+                ]);
+
+                if (listingsResponse.error) throw listingsResponse.error;
+                if (profilesResponse.error) throw profilesResponse.error;
+
+                const listings = (listingsResponse.data || []).map(item => ({ ...item, type: 'listing' }));
+                const profiles = (profilesResponse.data || []).map(item => ({ ...item, type: 'user' }));
+
+                setSuggestions([...profiles, ...listings]);
             } catch (error) {
                 console.error('Search suggestions error:', error);
                 setSuggestions([]);

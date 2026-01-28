@@ -75,46 +75,80 @@ const SearchDropdown = ({
                     </div>
                 ) : suggestions.length > 0 ? (
                     <>
-                        {suggestions.map((listing, index) => (
+                        {suggestions.map((item, index) => (
                             <motion.button
-                                key={listing.id}
+                                key={`${item.type}-${item.id}`}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.03 }}
-                                onClick={() => handleItemClick(listing)}
+                                onClick={() => {
+                                    if (item.type === 'user') {
+                                        onSelect?.();
+                                        navigate(`/arama?userId=${item.id}`);
+                                        onClose();
+                                    } else {
+                                        handleItemClick(item);
+                                    }
+                                }}
                                 className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
                             >
-                                <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                                    {listing.images && listing.images.length > 0 ? (
-                                        <img
-                                            src={listing.images[0]}
-                                            alt={listing.title}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <Search className="w-6 h-6 text-gray-400" />
+                                {item.type === 'user' ? (
+                                    // User Item Render
+                                    <>
+                                        <div className="w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                                            {item.avatar_url ? (
+                                                <img src={item.avatar_url} alt={item.username} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold uppercase">
+                                                    {item.username?.[0] || item.full_name?.[0] || '?'}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                                <div className="flex-1 text-left min-w-0">
-                                    <h4 className="font-medium text-gray-900 line-clamp-1">
-                                        {listing.title}
-                                    </h4>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-sm font-semibold text-blue-600">
-                                            {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
-                                        </span>
-                                        {listing.cities && (
-                                            <span className="text-xs text-gray-500">
-                                                • {listing.cities.name}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="text-xs text-gray-400 capitalize">
-                                    {listing.category?.replace('-', ' ')}
-                                </div>
+                                        <div className="flex-1 text-left min-w-0">
+                                            <h4 className="font-medium text-gray-900 line-clamp-1">
+                                                {item.full_name || item.username}
+                                            </h4>
+                                            <div className="text-xs text-gray-500">
+                                                @{item.username} • Satıcı
+                                            </div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    // Listing Item Render
+                                    <>
+                                        <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                            {item.images && item.images.length > 0 ? (
+                                                <img
+                                                    src={item.images[0]}
+                                                    alt={item.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <Search className="w-6 h-6 text-gray-400" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 text-left min-w-0">
+                                            <h4 className="font-medium text-gray-900 line-clamp-1">
+                                                {item.title}
+                                            </h4>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className="text-sm font-semibold text-blue-600">
+                                                    {new Intl.NumberFormat('tr-TR').format(item.price)} {item.currency}
+                                                </span>
+                                                {item.cities && (
+                                                    <span className="text-xs text-gray-500">
+                                                        • {item.cities.name}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-gray-400 capitalize">
+                                            {item.category?.replace('-', ' ')}
+                                        </div>
+                                    </>
+                                )}
                             </motion.button>
                         ))}
 

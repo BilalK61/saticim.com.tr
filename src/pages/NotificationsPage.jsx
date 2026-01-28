@@ -179,31 +179,39 @@ const NotificationsPage = () => {
                                 key={notification.id}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className={`bg-white rounded-2xl p-5 border transition-all hover:shadow-md group ${!notification.isRead ? 'border-blue-100 bg-blue-50/10' : 'border-gray-100'}`}
+                                className={`bg-white rounded-2xl p-5 border transition-all hover:shadow-md group ${!notification.is_read ? 'border-blue-100 bg-blue-50/10' : 'border-gray-100'}`}
                             >
                                 <div className="flex items-start gap-4">
-                                    <div className={`w-2.5 h-2.5 rounded-full mt-2 shrink-0 ${!notification.isRead ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                                    <div className={`w-2.5 h-2.5 rounded-full mt-2 shrink-0 ${!notification.is_read ? 'bg-blue-600' : 'bg-gray-200'}`} />
 
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start justify-between gap-4">
                                             <div>
-                                                <h3 className={`font-semibold text-gray-900 ${!notification.isRead ? 'text-blue-900' : ''}`}>
+                                                <h3 className={`font-semibold text-gray-900 ${!notification.is_read ? 'text-blue-900' : ''}`}>
                                                     {notification.title}
                                                 </h3>
                                                 <p className="text-gray-600 mt-1 text-sm leading-relaxed">
-                                                    {notification.text}
+                                                    {notification.text || notification.content || notification.message}
                                                 </p>
+                                                {notification.action_url && (
+                                                    <button
+                                                        onClick={() => navigate(notification.action_url)}
+                                                        className="mt-3 px-4 py-2 bg-blue-50 text-blue-600 text-sm font-medium rounded-lg hover:bg-blue-100 transition inline-flex items-center gap-2"
+                                                    >
+                                                        Hemen Düzenle
+                                                    </button>
+                                                )}
                                             </div>
                                             <div className="text-xs text-gray-400 whitespace-nowrap flex items-center gap-1">
                                                 <Clock className="w-3 h-3" />
-                                                {notification.time}
+                                                {formatTimeAgo(notification.created_at)}
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Actions */}
                                     <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {!notification.isRead && (
+                                        {!notification.is_read && (
                                             <button
                                                 onClick={() => handleMarkAsRead(notification.id)}
                                                 className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"

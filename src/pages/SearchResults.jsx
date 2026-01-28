@@ -9,30 +9,20 @@ const SearchResults = () => {
     const [searchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
 
-    const [listings, setListings] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [totalResults, setTotalResults] = useState(0);
-
-    // Filters
-    const [selectedCategory, setSelectedCategory] = useState('');
-    const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-    const [showFilters, setShowFilters] = useState(false);
-
-    const categories = [
-        'vasita', 'emlak', 'elektronik', 'giyim', 'ev-esyalari',
-        'is-ilanlari', 'hizmetler', 'anne-bebek', 'hobi-oyun',
-        'kitap-dergi', 'kozmetik', 'spor'
-    ];
+    const [profiles, setProfiles] = useState([]);
 
     useEffect(() => {
-        if (query) {
+        if (query || searchParams.get('userId')) {
             fetchResults();
         }
-    }, [query, selectedCategory, priceRange]);
+    }, [query, selectedCategory, priceRange, searchParams]);
 
     const fetchResults = async () => {
         setLoading(true);
+        const userId = searchParams.get('userId');
+
         try {
+            // Listings Query
             let queryBuilder = supabase
                 .from('listings')
                 .select('*, cities(name), districts(name)')
@@ -41,6 +31,11 @@ const SearchResults = () => {
             // Search in title and description
             if (query) {
                 queryBuilder = queryBuilder.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
+            }
+
+            // UserId filter (Specific Seller Listings)
+            if (userId) {
+                queryBuilder = queryBuilder.eq('user_id', userId);
             }
 
             // Category filter
@@ -56,14 +51,30 @@ const SearchResults = () => {
                 queryBuilder = queryBuilder.lte('price', parseFloat(priceRange.max));
             }
 
-            const { data, error, count } = await queryBuilder
+            const { data: listingsData, error: listingsError } = await queryBuilder
                 .order('created_at', { ascending: false })
                 .limit(50);
 
-            if (error) throw error;
+            if (listingsError) throw listingsError;
 
-            setListings(data || []);
-            setTotalResults(data?.length || 0);
+            setListings(listingsData || []);
+            setTotalResults(listingsData?.length || 0);
+
+            // Profiles Query (Only if searching with query text, not when filtering by userId)
+            if (query && !userId) {
+                const { data: profilesData, error: profilesError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+                    .limit(5);
+
+                if (!profilesError) {
+                    setProfiles(profilesData || []);
+                }
+            } else {
+                setProfiles([]);
+            }
+
         } catch (error) {
             console.error('Arama hatası:', error);
         } finally {
@@ -175,79 +186,117 @@ const SearchResults = () => {
                             <div className="flex justify-center items-center py-20">
                                 <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
                             </div>
-                        ) : listings.length > 0 ? (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                            >
-                                {listings.map((listing, index) => (
-                                    <motion.div
-                                        key={listing.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.05 }}
-                                    >
-                                        <Link
-                                            to={`/ilan/${listing.id}`}
-                                            className="block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                                        >
-                                            <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-                                                {listing.images && listing.images.length > 0 ? (
-                                                    <img
-                                                        src={listing.images[0]}
-                                                        alt={listing.title}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                                                        <Search className="text-gray-400" size={48} />
-                                                    </div>
-                                                )}
-                                                <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                                                    <MapPin size={12} />
-                                                    {listing.cities?.name} / {listing.districts?.name}
-                                                </div>
-                                            </div>
-                                            <div className="p-4">
-                                                <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 hover:text-blue-600 transition">
-                                                    {listing.title}
-                                                </h3>
-                                                <div className="text-xl font-bold text-blue-600 mb-2">
-                                                    {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
-                                                </div>
-                                                <div className="flex items-center justify-between text-xs text-gray-500">
-                                                    <span className="capitalize bg-gray-100 px-2 py-1 rounded">
-                                                        {listing.category?.replace('-', ' ')}
-                                                    </span>
-                                                    <span>{new Date(listing.created_at).toLocaleDateString('tr-TR')}</span>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
                         ) : (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="bg-white rounded-xl shadow-sm p-16 text-center border border-gray-200"
-                            >
-                                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6 mx-auto">
-                                    <Search className="w-10 h-10 text-gray-400" />
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">Sonuç Bulunamadı</h3>
-                                <p className="text-gray-500 max-w-md mx-auto mb-6">
-                                    "<span className="font-semibold">{query}</span>" için herhangi bir ilan bulunamadı.
-                                    Farklı bir arama terimi deneyebilir veya filtreleri değiştirebilirsiniz.
-                                </p>
-                                <button
-                                    onClick={clearFilters}
-                                    className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
-                                >
-                                    Filtreleri Temizle
-                                </button>
-                            </motion.div>
+                            <>
+                                {/* Users/Profiles Section */}
+                                {profiles.length > 0 && (
+                                    <div className="mb-8">
+                                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                            <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">KULLANICILAR ({profiles.length})</span>
+                                        </h2>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {profiles.map((profile) => (
+                                                <Link
+                                                    key={profile.id}
+                                                    to={`/arama?userId=${profile.id}`}
+                                                    className="bg-white p-4 rounded-xl border border-gray-200 hover:shadow-md transition flex items-center gap-4 group"
+                                                >
+                                                    <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-100">
+                                                        {profile.avatar_url ? (
+                                                            <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center font-bold text-gray-400 bg-gray-200">
+                                                                {profile.username?.[0]?.toUpperCase() || '?'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                                                            {profile.full_name || profile.username}
+                                                        </h3>
+                                                        <p className="text-xs text-gray-500">@{profile.username}</p>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {listings.length > 0 ? (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                                    >
+                                        {listings.map((listing, index) => (
+                                            <motion.div
+                                                key={listing.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                            >
+                                                <Link
+                                                    to={`/ilan/${listing.id}`}
+                                                    className="block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                                                >
+                                                    <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+                                                        {listing.images && listing.images.length > 0 ? (
+                                                            <img
+                                                                src={listing.images[0]}
+                                                                alt={listing.title}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                                                                <Search className="text-gray-400" size={48} />
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                                                            <MapPin size={12} />
+                                                            {listing.cities?.name} / {listing.districts?.name}
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-4">
+                                                        <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2 hover:text-blue-600 transition">
+                                                            {listing.title}
+                                                        </h3>
+                                                        <div className="text-xl font-bold text-blue-600 mb-2">
+                                                            {new Intl.NumberFormat('tr-TR').format(listing.price)} {listing.currency}
+                                                        </div>
+                                                        <div className="flex items-center justify-between text-xs text-gray-500">
+                                                            <span className="capitalize bg-gray-100 px-2 py-1 rounded">
+                                                                {listing.category?.replace('-', ' ')}
+                                                            </span>
+                                                            <span>{new Date(listing.created_at).toLocaleDateString('tr-TR')}</span>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            </motion.div>
+                                        ))}
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="bg-white rounded-xl shadow-sm p-16 text-center border border-gray-200"
+                                    >
+                                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6 mx-auto">
+                                            <Search className="w-10 h-10 text-gray-400" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900 mb-2">Sonuç Bulunamadı</h3>
+                                        <p className="text-gray-500 max-w-md mx-auto mb-6">
+                                            "<span className="font-semibold">{query}</span>" için herhangi bir ilan bulunamadı.
+                                            Farklı bir arama terimi deneyebilir veya filtreleri değiştirebilirsiniz.
+                                        </p>
+                                        <button
+                                            onClick={clearFilters}
+                                            className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+                                        >
+                                            Filtreleri Temizle
+                                        </button>
+                                    </motion.div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

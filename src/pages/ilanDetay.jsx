@@ -12,7 +12,8 @@ import {
     ChevronLeft,
     CheckCircle2,
     ShieldCheck,
-    User
+    User,
+    CheckCircle
 } from 'lucide-react';
 import IlanSikayet from '../components/ilansikayet';
 import ShareButton from '../components/ShareButton';
@@ -242,7 +243,8 @@ const IlanDetay = () => {
                     username: null,
                     avatar: null,
                     joinDate: "Üye",
-                    isVerified: false
+                    isVerified: false,
+                    role: 'user'
                 };
 
                 if (listingData.user_id) {
@@ -266,6 +268,7 @@ const IlanDetay = () => {
                                 }
                             }
                             sellerInfo.isVerified = profileData.email_verified || false;
+                            sellerInfo.role = profileData.role || 'user';
                         }
                     } catch (err) {
                         console.warn('Profile fetch failed', err);
@@ -345,7 +348,8 @@ const IlanDetay = () => {
                         avatar: sellerInfo.avatar,
                         joinDate: sellerInfo.joinDate,
                         phones: [listingData.contact_phone || "No Phone"],
-                        isVerified: sellerInfo.isVerified
+                        isVerified: sellerInfo.isVerified,
+                        role: sellerInfo.role
                     }
                 };
 
@@ -594,7 +598,8 @@ const IlanDetay = () => {
                                 <div>
                                     <h3 className="font-bold text-gray-900 text-lg flex items-center gap-1">
                                         {listing.seller.name}
-                                        {listing.seller.isVerified && <CheckCircle2 size={16} fill="currentColor" className="text-white bg-blue-500 rounded-full p-0.5" />}
+                                        {listing.seller.role === 'admin' && <CheckCircle size={16} className="text-green-500" />}
+                                        {listing.seller.role === 'moderator' && <CheckCircle size={16} className="text-blue-500" />}
                                     </h3>
                                     {listing.seller.username && (
                                         <p className="text-sm text-gray-400">@{listing.seller.username}</p>

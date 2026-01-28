@@ -76,7 +76,8 @@ function App() {
                         <Route path="/verify-email" element={<EmailVerificationPage />} />
                         <Route path="/profil" element={<ProfilPage />} />
                         <Route path="/ilan-ekle" element={<IlanEkle />} />
-                        <Route path="/ilanuzenle/:id" element={<IlanEkle />} />
+                        <Route path="/ilan-duzenle/:id" element={<IlanEkle />} />
+                        <Route path="/ilan-ekle/:id" element={<IlanEkle />} />
                         <Route path="/ilan/:id" element={<IlanDetay />} />
                         <Route path="/mesajlar" element={<Mesajlar />} />
                         <Route path="/ai-asistani" element={<AiAssistantPage />} />

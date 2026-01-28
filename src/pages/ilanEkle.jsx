@@ -369,8 +369,9 @@ const IlanEkle = () => {
 
             if (error) throw error;
 
-            // Check authorization
-            if (data.user_id !== user?.id) {
+            // Check authorization (Owner OR Admin/Moderator)
+            const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
+            if (data.user_id !== user?.id && !isAdmin) {
                 showModal('Yetkisiz İşlem', 'Bu ilanı düzenleme yetkiniz yok.', 'error', () => navigate('/profil'));
                 return;
             }
@@ -415,10 +416,11 @@ const IlanEkle = () => {
                 setPhoneDetails(data.details);
             }
 
-            setLoadingData(false);
         } catch (error) {
             console.error('İlan yüklenirken hata:', error);
             showModal('Hata', 'İlan verileri yüklenemedi.', 'error', () => navigate('/profil'));
+        } finally {
+            setLoadingData(false);
         }
     };
 
@@ -467,7 +469,10 @@ const IlanEkle = () => {
                 // UPDATE existing listing
                 const result = await supabase
                     .from('listings')
-                    .update(listingData)
+                    .update({
+                        ...listingData,
+                        status: 'pending' // Reset status to pending on update
+                    })
                     .eq('id', id)
                     .eq('user_id', user.id); // Ensure user owns the listing
 

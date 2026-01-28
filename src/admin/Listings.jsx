@@ -25,6 +25,13 @@ const Listings = () => {
         showCancel: false
     });
 
+    // Reject Modal State
+    const [rejectModal, setRejectModal] = useState({
+        isOpen: false,
+        listingId: null,
+        reason: ''
+    });
+
     const showModal = (title, message, type = 'info', onConfirm = null, showCancel = false) => {
         setModal({
             isOpen: true,
@@ -212,8 +219,74 @@ const Listings = () => {
     };
 
     const handlePreviewAction = async (id, action) => {
-        await handleStatusChange(id, action);
-        handlePreviewClose();
+        if (action === 'rejected') {
+            handlePreviewClose();
+            openRejectModal(id);
+        } else {
+            await handleStatusChange(id, action);
+            handlePreviewClose();
+        }
+    };
+
+    const openRejectModal = (id) => {
+        setRejectModal({
+            isOpen: true,
+            listingId: id,
+            reason: ''
+        });
+    };
+
+    const closeRejectModal = () => {
+        setRejectModal(prev => ({ ...prev, isOpen: false }));
+    };
+
+    const handleRejectConfirm = async () => {
+        if (!rejectModal.reason.trim()) {
+            showModal('Uyarı', 'Lütfen bir ret sebebi belirtin.', 'warning');
+            return;
+        }
+
+        const listing = listings.find(l => l.id === rejectModal.listingId);
+        if (!listing) return;
+
+        // Optimistic update
+        setListings(prev => prev.map(l => l.id === rejectModal.listingId ? { ...l, status: 'rejected' } : l));
+        closeRejectModal();
+
+        try {
+            // Update status
+            const { error: updateError } = await supabase
+                .from('listings')
+                .update({ status: 'rejected' })
+                .eq('id', rejectModal.listingId);
+
+            if (updateError) throw updateError;
+
+            // Send Notification
+            const { error: notifError } = await supabase
+                .from('notifications')
+                .insert({
+                    user_id: listing.user_id,
+                    title: 'İlanınız Reddedildi',
+                    message: `"${listing.title}" başlıklı ilanınız şu nedenle onaylanmadı: ${rejectModal.reason}. Lütfen gerekli düzenlemeleri yapıp tekrar onaya gönderin.`,
+                    type: 'system',
+                    is_read: false,
+                    action_url: `/ilan-duzenle/${listing.id}`
+                });
+
+            if (notifError) {
+                console.error('Bildirim gönderme hatası (Full):', JSON.stringify(notifError, null, 2));
+                const errorMsg = notifError.message || JSON.stringify(notifError);
+                showModal('Uyarı', 'İlan reddedildi ancak bildirim gönderilemedi: ' + errorMsg, 'warning');
+            } else {
+                showModal('Başarılı', 'İlan reddedildi ve kullanıcı bilgilendirildi.', 'success');
+            }
+
+        } catch (error) {
+            console.error('Reddetme işlemi hatası:', error);
+            showModal('Hata', 'İşlem sırasında bir hata oluştu: ' + error.message, 'error');
+            fetchListings(); // Revert on error
+        }
     };
 
     const getStatusColor = (status) => {
@@ -321,7 +394,7 @@ const Listings = () => {
                                                     <Check size={18} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleStatusChange(item.id, 'rejected')}
+                                                    onClick={() => openRejectModal(item.id)}
                                                     title="Reddet"
                                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                                                 >
@@ -385,6 +458,46 @@ const Listings = () => {
                 onApprove={(id) => handlePreviewAction(id, 'approved')}
                 onReject={(id) => handlePreviewAction(id, 'rejected')}
             />
+
+            {/* Reject Reason Modal */}
+            {rejectModal.isOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-gray-900">İlanı Reddet</h3>
+                            <button onClick={closeRejectModal} className="text-gray-400 hover:text-gray-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Bu ilanı reddetmek üzeresiniz. Lütfen kullanıcı için bir sebep belirtin. Bu sebep kullanıcıya bildirim olarak gönderilecektir.
+                        </p>
+                        <textarea
+                            value={rejectModal.reason}
+                            onChange={(e) => setRejectModal(prev => ({ ...prev, reason: e.target.value }))}
+                            placeholder="Örn: Görseller yetersiz, açıklama hatalı..."
+                            className="w-full h-32 p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 mb-6 resize-none"
+                            autoFocus
+                        />
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={closeRejectModal}
+                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition"
+                            >
+                                İptal
+                            </button>
+                            <button
+                                onClick={handleRejectConfirm}
+                                disabled={!rejectModal.reason.trim()}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <X size={16} />
+                                Reddet ve Bildir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

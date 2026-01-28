@@ -294,7 +294,7 @@ const HobiOyun = () => {
                             <h1 className="text-xl font-bold text-gray-900">Hobi & Oyun İlanları</h1>
                             <p className="text-sm text-gray-500 mt-1">Arama kriterlerinize uygun ilanlar listeleniyor</p>
                         </div>
-                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-3 w-full sm:w-auto lg:hidden">
                             <select className="w-full sm:w-48 p-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                                 <option>Sıralama: Önerilen</option>
                                 <option>Fiyat: Artan</option>
