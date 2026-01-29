@@ -12,6 +12,14 @@ const Users = () => {
     const [openDropdown, setOpenDropdown] = useState(null);
     const [banModal, setBanModal] = useState({ open: false, user: null });
     const [banReason, setBanReason] = useState('');
+    const [roleVerifyModal, setRoleVerifyModal] = useState({
+        open: false,
+        user: null,
+        newRole: null,
+        verificationCode: '',
+        enteredCode: '',
+        loading: false
+    });
     const [modalConfig, setModalConfig] = useState({
         isOpen: false,
         title: '',
@@ -237,40 +245,146 @@ const Users = () => {
             }
         }
 
-        showModal({
-            title: 'Rol Değiştir',
-            message: `Kullanıcının rolünü "${newRole}" olarak değiştirmek istediğinizden emin misiniz?`,
-            type: 'warning',
-            confirmText: 'Değiştir',
-            cancelText: 'Vazgeç',
-            showCancel: true,
-            onConfirm: async () => {
-                try {
-                    const { error } = await supabase
-                        .from('profiles')
-                        .update({ role: newRole })
-                        .eq('id', userId);
+        // Skip verification if demoting to 'user' (no notification needed)
+        if (newRole === 'user') {
+            showModal({
+                title: 'Rol Değiştir',
+                message: `Kullanıcının rolünü "Kullanıcı" olarak değiştirmek istediğinizden emin misiniz?`,
+                type: 'warning',
+                confirmText: 'Değiştir',
+                cancelText: 'Vazgeç',
+                showCancel: true,
+                onConfirm: async () => {
+                    try {
+                        const { error } = await supabase
+                            .from('profiles')
+                            .update({ role: newRole })
+                            .eq('id', userId);
 
-                    if (error) throw error;
+                        if (error) throw error;
 
-                    setUsers(users.map(u =>
-                        u.id === userId ? { ...u, role: newRole } : u
-                    ));
-                    showModal({
-                        title: 'Başarılı',
-                        message: `Kullanıcının rolü "${newRole}" olarak güncellendi.`,
-                        type: 'success'
-                    });
-                } catch (error) {
-                    console.error('Rol değiştirme hatası:', error.message);
-                    showModal({
-                        title: 'Hata',
-                        message: 'Rol değiştirilirken bir hata oluştu.',
-                        type: 'error'
-                    });
+                        setUsers(users.map(u =>
+                            u.id === userId ? { ...u, role: newRole } : u
+                        ));
+                        showModal({
+                            title: 'Başarılı',
+                            message: `Kullanıcının rolü "Kullanıcı" olarak güncellendi.`,
+                            type: 'success'
+                        });
+                    } catch (error) {
+                        console.error('Rol değiştirme hatası:', error.message);
+                        showModal({
+                            title: 'Hata',
+                            message: 'Rol değiştirilirken bir hata oluştu.',
+                            type: 'error'
+                        });
+                    }
                 }
-            }
-        });
+            });
+            return;
+        }
+
+        // Generate 6-digit verification code for moderator/admin promotion
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        try {
+            // Send notification to the target user with the verification code
+            const roleText = newRole === 'admin' ? 'Admin' : 'Moderatör';
+            const { error: notifError } = await supabase
+                .from('notifications')
+                .insert({
+                    user_id: userId,
+                    type: 'role_verification',
+                    title: `${roleText} Yetkilendirme Kodu`,
+                    message: `Hesabınız ${roleText} olarak yetkilendirilmek üzere. Doğrulama kodunuz: ${verificationCode}`,
+                    link: null,
+                    is_read: false
+                });
+
+            if (notifError) throw notifError;
+
+            // Open the verification modal
+            setRoleVerifyModal({
+                open: true,
+                user: targetUser,
+                newRole: newRole,
+                verificationCode: verificationCode,
+                enteredCode: '',
+                loading: false
+            });
+            setOpenDropdown(null);
+
+        } catch (error) {
+            console.error('Bildirim gönderme hatası:', error);
+            showModal({
+                title: 'Hata',
+                message: 'Doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.',
+                type: 'error'
+            });
+        }
+    };
+
+    const handleVerifyRoleChange = async () => {
+        if (roleVerifyModal.enteredCode !== roleVerifyModal.verificationCode) {
+            showModal({
+                title: 'Hatalı Kod',
+                message: 'Girdiğiniz doğrulama kodu yanlış. Lütfen kullanıcının bildirimlerindeki kodu kontrol edin.',
+                type: 'error'
+            });
+            return;
+        }
+
+        setRoleVerifyModal(prev => ({ ...prev, loading: true }));
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ role: roleVerifyModal.newRole })
+                .eq('id', roleVerifyModal.user.id);
+
+            if (error) throw error;
+
+            setUsers(users.map(u =>
+                u.id === roleVerifyModal.user.id ? { ...u, role: roleVerifyModal.newRole } : u
+            ));
+
+            const roleText = roleVerifyModal.newRole === 'admin' ? 'Admin' : 'Moderatör';
+
+            // Send success notification to the user
+            await supabase
+                .from('notifications')
+                .insert({
+                    user_id: roleVerifyModal.user.id,
+                    type: 'role_changed',
+                    title: 'Rol Değişikliği',
+                    message: `Tebrikler! Hesabınız ${roleText} olarak yetkilendirildi.`,
+                    link: null,
+                    is_read: false
+                });
+
+            setRoleVerifyModal({
+                open: false,
+                user: null,
+                newRole: null,
+                verificationCode: '',
+                enteredCode: '',
+                loading: false
+            });
+
+            showModal({
+                title: 'Başarılı',
+                message: `Kullanıcının rolü "${roleText}" olarak güncellendi.`,
+                type: 'success'
+            });
+        } catch (error) {
+            console.error('Rol değiştirme hatası:', error.message);
+            setRoleVerifyModal(prev => ({ ...prev, loading: false }));
+            showModal({
+                title: 'Hata',
+                message: 'Rol değiştirilirken bir hata oluştu.',
+                type: 'error'
+            });
+        }
     };
 
     const handleSendEmail = (user) => {
@@ -554,6 +668,87 @@ const Users = () => {
                     </div>
                 </div>
             )}
+
+            {/* Role Verification Modal */}
+            {roleVerifyModal.open && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-gray-900">Doğrulama Kodu</h3>
+                            <button
+                                onClick={() => {
+                                    setRoleVerifyModal({
+                                        open: false,
+                                        user: null,
+                                        newRole: null,
+                                        verificationCode: '',
+                                        enteredCode: '',
+                                        loading: false
+                                    });
+                                }}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                            <p className="text-blue-800 text-sm">
+                                <span className="font-semibold">{roleVerifyModal.user?.username || roleVerifyModal.user?.full_name}</span> kullanıcısına
+                                <span className="font-semibold"> {roleVerifyModal.newRole === 'admin' ? 'Admin' : 'Moderatör'}</span> yetkisi vermek için
+                                doğrulama kodu gönderildi.
+                            </p>
+                            <p className="text-blue-700 text-sm mt-2">
+                                Kullanıcıdan bildirimlerindeki 6 haneli kodu alın ve aşağıya girin.
+                            </p>
+                        </div>
+
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                6 Haneli Doğrulama Kodu
+                            </label>
+                            <input
+                                type="text"
+                                value={roleVerifyModal.enteredCode}
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                    setRoleVerifyModal(prev => ({ ...prev, enteredCode: value }));
+                                }}
+                                placeholder="______"
+                                maxLength={6}
+                                className="w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => {
+                                    setRoleVerifyModal({
+                                        open: false,
+                                        user: null,
+                                        newRole: null,
+                                        verificationCode: '',
+                                        enteredCode: '',
+                                        loading: false
+                                    });
+                                }}
+                                className="flex-1 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+                                disabled={roleVerifyModal.loading}
+                            >
+                                İptal
+                            </button>
+                            <button
+                                onClick={handleVerifyRoleChange}
+                                disabled={roleVerifyModal.enteredCode.length !== 6 || roleVerifyModal.loading}
+                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {roleVerifyModal.loading ? 'Doğrulanıyor...' : 'Doğrula'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* General Modal */}
             <Modal
                 isOpen={modalConfig.isOpen}

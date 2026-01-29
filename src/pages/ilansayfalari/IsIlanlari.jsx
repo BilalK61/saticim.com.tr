@@ -336,7 +336,7 @@ const IsIlanlari = () => {
                             </div>
                             {/* Listing Rows */}
                             {sortedListings.map(l => (
-                                <a key={l.id} href={`/ilan/${l.id}`} className="block group">
+                                <a key={l.id} href={`/ilan/${l.listing_no || l.id}`} className="block group">
                                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-blue-300 transition">
                                         {/* Desktop View */}
                                         <div className="hidden lg:grid lg:grid-cols-12 gap-4 items-center px-4 py-3">

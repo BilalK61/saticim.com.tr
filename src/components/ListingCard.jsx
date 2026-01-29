@@ -9,7 +9,7 @@ const ListingCard = ({ listing }) => {
     };
 
     return (
-        <Link to={`/ilan/${listing.id}`} className="block group w-full">
+        <Link to={`/ilan/${listing.listing_no || listing.id}`} className="block group w-full">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition h-full flex flex-col">
                 <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                     <img

@@ -240,18 +240,18 @@ const ProfilPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-6 pb-12">
+        <div className="min-h-screen bg-gray-50 pt-6 pb-24 lg:pb-12">
             <div className="container mx-auto px-4">
 
                 {/* Profile Header Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-                    <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-600 relative">
+                    <div className="h-24 md:h-32 bg-gradient-to-r from-blue-600 to-indigo-600 relative">
                         {/* Cover Image Placeholder */}
                     </div>
-                    <div className="px-6 pb-6 relative">
-                        <div className="flex flex-col md:flex-row items-end -mt-12 mb-4 gap-4">
-                            <div className="w-24 h-24 rounded-full bg-white p-1 shadow-md">
-                                <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-2xl font-bold text-gray-500 overflow-hidden">
+                    <div className="px-4 md:px-6 pb-6 relative">
+                        <div className="flex flex-col md:flex-row items-center md:items-end -mt-10 md:-mt-12 mb-4 gap-4 text-center md:text-left">
+                            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white p-1 shadow-md z-10">
+                                <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-xl md:text-2xl font-bold text-gray-500 overflow-hidden">
                                     {user.avatar_url ? (
                                         <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
@@ -259,9 +259,9 @@ const ProfilPage = () => {
                                     )}
                                 </div>
                             </div>
-                            <div className="flex-1 mt-12">
-                                <h1 className="text-2xl font-bold text-gray-900">{user.full_name || user.username || 'İsimsiz Kullanıcı'}</h1>
-                                <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
+                            <div className="flex-1 mt-2 md:mt-12 w-full">
+                                <h1 className="text-xl md:text-2xl font-bold text-gray-900">{user.full_name || user.username || 'İsimsiz Kullanıcı'}</h1>
+                                <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-sm text-gray-500 mt-1 justify-center md:justify-start">
                                     <span className="flex items-center gap-1">
                                         <User size={14} /> @{user.username || user.email?.split('@')[0]}
                                     </span>
@@ -270,18 +270,18 @@ const ProfilPage = () => {
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex gap-2 mb-2">
+                            <div className="flex gap-2 mb-2 w-full md:w-auto justify-center md:justify-end">
                                 <button
                                     onClick={() => navigate('/ilan-ekle')}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center gap-2"
+                                    className="flex-1 md:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center gap-2"
                                 >
-                                    <Plus size={16} /> İlan Ver
+                                    <Plus size={16} /> <span className="hidden sm:inline">İlan Ver</span>
                                 </button>
                                 <button
                                     onClick={() => { setActiveTab('settings'); setIsEditing(true); }}
-                                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition flex items-center gap-2"
+                                    className="flex-1 md:flex-none px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2"
                                 >
-                                    <Settings size={16} /> Düzenle
+                                    <Settings size={16} /> <span className="hidden sm:inline">Düzenle</span>
                                 </button>
                             </div>
                         </div>
@@ -289,20 +289,20 @@ const ProfilPage = () => {
                         {/* Stats */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-gray-100 pt-6">
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">{profileStats.totalListings}</div>
-                                <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">Aktif İlan</div>
+                                <div className="text-xl md:text-2xl font-bold text-gray-900">{profileStats.totalListings}</div>
+                                <div className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wide font-medium">Aktif İlan</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">{profileStats.favorites}</div>
-                                <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">Favoriler</div>
+                                <div className="text-xl md:text-2xl font-bold text-gray-900">{profileStats.favorites}</div>
+                                <div className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wide font-medium">Favoriler</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">0</div>
-                                <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">Mesajlar</div>
+                                <div className="text-xl md:text-2xl font-bold text-gray-900">0</div>
+                                <div className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wide font-medium">Mesajlar</div>
                             </div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">Standart</div>
-                                <div className="text-xs text-gray-500 uppercase tracking-wide font-medium">Üyelik</div>
+                                <div className="text-xl md:text-2xl font-bold text-gray-900">Standart</div>
+                                <div className="text-[10px] md:text-xs text-gray-500 uppercase tracking-wide font-medium">Üyelik</div>
                             </div>
                         </div>
                     </div>
@@ -310,32 +310,32 @@ const ProfilPage = () => {
 
                 <div className="flex flex-col lg:flex-row gap-6">
 
-                    {/* Sidebar Tabs */}
-                    <aside className="w-full lg:w-64 flex-shrink-0">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <nav className="flex flex-col p-2">
+                    {/* Sidebar Tabs - Desktop Sidebar / Mobile Horizontal Scroll */}
+                    <aside className="w-full lg:w-64 flex-shrink-0 sticky top-4 z-10 lg:z-auto bg-gray-50 lg:bg-transparent -mx-4 px-4 lg:mx-auto lg:px-0 py-2 lg:py-0 overflow-x-auto lg:overflow-visible">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-w-max lg:min-w-0">
+                            <nav className="flex flex-row lg:flex-col p-2 gap-2 lg:gap-0">
                                 <button
                                     onClick={() => setActiveTab('listings')}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${activeTab === 'listings' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                                    className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg text-sm font-medium transition whitespace-nowrap ${activeTab === 'listings' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
                                 >
                                     <Package size={18} /> İlanlarım
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('favorites')}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${activeTab === 'favorites' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                                    className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg text-sm font-medium transition whitespace-nowrap ${activeTab === 'favorites' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
                                 >
                                     <Heart size={18} /> Favorilerim
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('settings')}
-                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${activeTab === 'settings' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                                    className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg text-sm font-medium transition whitespace-nowrap ${activeTab === 'settings' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
                                 >
                                     <Settings size={18} /> Ayarlar
                                 </button>
-                                <hr className="my-2 border-gray-100" />
+                                <div className="hidden lg:block h-px bg-gray-100 my-2"></div>
                                 <button
                                     onClick={() => { signOut(); navigate('/login'); }}
-                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition"
+                                    className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition whitespace-nowrap"
                                 >
                                     <LogOut size={18} /> Çıkış Yap
                                 </button>

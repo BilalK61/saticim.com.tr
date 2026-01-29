@@ -55,7 +55,7 @@ const RecentListings = ({ listings, loading }) => {
                                 transition={{ delay: index * 0.05 }}
                             >
                                 <Link
-                                    to={`/ilan/${listing.id}`}
+                                    to={`/ilan/${listing.listing_no || listing.id}`}
                                     className="group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                                 >
                                     <div className="relative h-48 bg-gray-200 overflow-hidden">

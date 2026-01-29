@@ -165,12 +165,22 @@ const IlanDetay = () => {
 
                 //1. Fetch main listing data from Supabase (sadece onaylı ilanlar)
                 console.log("Fetching listing from Supabase...");
-                const { data: listingData, error: listingError } = await supabase
+
+                let query = supabase
                     .from('listings')
-                    .select('*')
-                    .eq('id', id)
-                    .eq('status', 'approved')
-                    .single();
+                    .select('*');
+
+                // Check if id is a UUID or a Listing Number (11 digits)
+                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+                if (isUUID) {
+                    query = query.eq('id', id);
+                } else {
+                    // Assume it's a listing_no (bigint)
+                    query = query.eq('listing_no', id);
+                }
+
+                const { data: listingData, error: listingError } = await query.maybeSingle();
 
                 if (listingError) {
                     console.error("Supabase Error:", listingError);
@@ -277,7 +287,7 @@ const IlanDetay = () => {
 
                 // 4. Construct Details List
                 const detailsList = [
-                    { label: "İlan No", value: listingData.id },
+                    { label: "İlan No", value: listingData.listing_no || listingData.id },
                     { label: "İlan Tarihi", value: new Date(listingData.created_at).toLocaleDateString('tr-TR') },
                 ];
 
@@ -551,9 +561,9 @@ const IlanDetay = () => {
                             <div className="text-3xl font-bold text-blue-600 mb-4">{formatPrice(listing.price, listing.currency)}</div>
                             <div className="flex items-center gap-2 text-gray-500 text-sm mb-6">
                                 <MapPin size={16} />
-                                <span>{listing.location.district} / {listing.location.city}</span>
+                                <span>{listing.location.district ? `${listing.location.district} / ` : ''}{listing.location.city}</span>
                                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                <span className="text-gray-400">İlan No: {listing.id}</span>
+                                <span className="text-gray-400">İlan No: {listing.listing_no || listing.id}</span>
                             </div>
 
                             <div className="flex gap-2 mb-6">

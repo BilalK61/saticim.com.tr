@@ -59,8 +59,12 @@ const Navbar = () => {
       })
       .subscribe();
 
+    const handleNotificationUpdate = () => fetchNotifications();
+    window.addEventListener('notificationUpdate', handleNotificationUpdate);
+
     return () => {
       supabase.removeChannel(subscription);
+      window.removeEventListener('notificationUpdate', handleNotificationUpdate);
     };
   }, [user]);
 
@@ -279,7 +283,7 @@ const Navbar = () => {
                     {/* Menu Items */}
                     <div className="p-2">
                       {menuView === 'notifications' ? (
-                        <div className="w-full">
+                        <div className="w-full min-h-[320px] flex flex-col">
                           <div className="flex items-center gap-2 p-2 mb-2 border-b border-gray-100">
                             <button
                               onClick={() => setMenuView('main')}
@@ -289,7 +293,7 @@ const Navbar = () => {
                             </button>
                             <span className="font-medium text-gray-900 text-sm">Bildirimler</span>
                           </div>
-                          <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                          <div className="space-y-1 flex-1 overflow-y-auto custom-scrollbar">
                             {notifications.length > 0 ? (
                               notifications.map((notif) => (
                                 <div
@@ -317,17 +321,17 @@ const Navbar = () => {
                                 Henüz bildiriminiz yok.
                               </div>
                             )}
-                            <div className="pt-2 text-center border-t border-gray-100 mt-2">
-                              <button
-                                onClick={() => {
-                                  setShowProfileMenu(false);
-                                  navigate('/bildirimler');
-                                }}
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline py-1 w-full"
-                              >
-                                Tümünü Gör
-                              </button>
-                            </div>
+                          </div>
+                          <div className="p-2 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+                            <button
+                              onClick={() => {
+                                setShowProfileMenu(false);
+                                navigate('/bildirimler');
+                              }}
+                              className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline py-1 w-full"
+                            >
+                              Tümünü Gör
+                            </button>
                           </div>
                         </div>
                       ) : (

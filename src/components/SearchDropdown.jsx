@@ -46,7 +46,7 @@ const SearchDropdown = ({
 
     const handleItemClick = (listing) => {
         onSelect?.();
-        navigate(`/ilan/${listing.id}`);
+        navigate(`/ilan/${listing.listing_no || listing.id}`);
         onClose();
     };
 

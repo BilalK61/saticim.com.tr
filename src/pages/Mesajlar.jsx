@@ -236,6 +236,18 @@ const Mesajlar = () => {
             // 4. Format for UI
             const formattedConversations = Array.from(conversationMap.entries()).map(([otherId, data]) => {
                 const profile = profilesMap[otherId] || { id: otherId, full_name: 'Bilinmeyen Kullanıcı', username: 'bilinmeyen' };
+
+                // Parse LISTING_REF format for friendly preview
+                let previewMessage = data.lastMsg.content;
+                if (previewMessage && previewMessage.startsWith('LISTING_REF:')) {
+                    const parts = previewMessage.split('|||');
+                    const listingTitle = parts[1] || 'bir ilan';
+                    const userMessage = parts[3] || '';
+                    previewMessage = userMessage
+                        ? `📦 ${listingTitle.substring(0, 20)}${listingTitle.length > 20 ? '...' : ''}: ${userMessage}`
+                        : `📦 İlan hakkında: ${listingTitle.substring(0, 25)}${listingTitle.length > 25 ? '...' : ''}`;
+                }
+
                 return {
                     id: otherId,
                     user: {
@@ -243,7 +255,7 @@ const Mesajlar = () => {
                         name: profile.full_name || profile.username || 'Kullanıcı',
                         avatar: profile.avatar_url
                     },
-                    lastMessage: data.lastMsg.content,
+                    lastMessage: previewMessage,
                     time: new Date(data.lastMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     fullDate: data.lastMsg.created_at,
                     unread: data.unreadCount
@@ -353,8 +365,14 @@ const Mesajlar = () => {
             }
 
         } catch (err) {
-            console.error("Error sending message:", err);
-            alert(`Mesaj gönderilemedi: ${err.message}`);
+            console.error("Error sending message (full error):", err);
+            let errorMessage = "Bilinmeyen bir hata oluştu";
+            if (err && typeof err === 'object') {
+                errorMessage = err.message || err.error_description || JSON.stringify(err);
+            } else if (typeof err === 'string') {
+                errorMessage = err;
+            }
+            alert(`Mesaj gönderilemedi: ${errorMessage}`);
         }
     };
 

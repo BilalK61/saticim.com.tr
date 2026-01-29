@@ -55,6 +55,7 @@ const NotificationsPage = () => {
     const handleMarkAsRead = async (id) => {
         // Optimistic update
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+        window.dispatchEvent(new Event('notificationUpdate'));
 
         const { error } = await supabase
             .from('notifications')
@@ -67,6 +68,7 @@ const NotificationsPage = () => {
     const handleDelete = async (id) => {
         // Optimistic update
         setNotifications(prev => prev.filter(n => n.id !== id));
+        window.dispatchEvent(new Event('notificationUpdate'));
 
         const { error } = await supabase
             .from('notifications')
@@ -79,6 +81,7 @@ const NotificationsPage = () => {
     const handleMarkAllAsRead = async () => {
         // Optimistic update
         setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        window.dispatchEvent(new Event('notificationUpdate'));
 
         const { error } = await supabase
             .from('notifications')

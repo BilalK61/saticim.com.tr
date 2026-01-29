@@ -14,20 +14,30 @@ create table if not exists public.notifications (
 alter table public.notifications enable row level security;
 
 -- 3. Create Policies
+-- 3. Create Policies
 -- View own notifications
+drop policy if exists "Users can view their own notifications" on public.notifications;
 create policy "Users can view their own notifications" 
 on public.notifications for select 
 using (auth.uid() = user_id);
 
 -- Update own notifications (mark as read)
+drop policy if exists "Users can update their own notifications" on public.notifications;
 create policy "Users can update their own notifications" 
 on public.notifications for update 
 using (auth.uid() = user_id);
 
 -- Insert notifications (needed for Login alerts from client-side or other interactions)
+drop policy if exists "Users can insert notifications" on public.notifications;
 create policy "Users can insert notifications" 
 on public.notifications for insert 
 with check (auth.uid() = user_id);
+
+-- Delete own notifications
+drop policy if exists "Users can delete their own notifications" on public.notifications;
+create policy "Users can delete their own notifications" 
+on public.notifications for delete 
+using (auth.uid() = user_id);
 
 -- 4. Trigger: Welcome Notification (on new user profile creation)
 create or replace function public.handle_new_user_notification() 
@@ -67,11 +77,11 @@ begin
 
   insert into public.notifications (user_id, type, title, message, link)
   values (
-    new.recipient_id,
+    new.receiver_id,
     'message',
     'Yeni Mesaj',
     sender_name || ' size bir mesaj gönderdi.',
-    '/mesajlar?conversationId=' || new.conversation_id
+    '/mesajlar?recipientId=' || new.sender_id
   );
   return new;
 end;
@@ -98,7 +108,7 @@ begin
       'price',
       'Fiyat İndirimi 🔔',
       'Favori ilanınızda (' || new.title || ') fiyat düştü! Yeni fiyat: ' || new.price,
-      '/ilan/' || new.id
+      '/ilan/' || new.listing_no
     from public.favorites f
     where f.listing_id = new.id;
   end if;
