@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import Modal from './Modal';
 
 const IlanSikayet = ({ isOpen, onClose, listingId, listingTitle }) => {
     const { user } = useAuth();
@@ -9,8 +10,7 @@ const IlanSikayet = ({ isOpen, onClose, listingId, listingTitle }) => {
     const [description, setDescription] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
-
-    if (!isOpen) return null;
+    const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' });
 
     const reasons = [
         "Yanlış Fiyat",
@@ -21,11 +21,14 @@ const IlanSikayet = ({ isOpen, onClose, listingId, listingTitle }) => {
         "Diğer"
     ];
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
+    const handleSubmit = async () => {
         if (!user) {
-            alert("Şikayet etmek için lütfen giriş yapınız.");
+            setErrorModal({ isOpen: true, message: 'Şikayet etmek için lütfen giriş yapınız.' });
+            return;
+        }
+
+        if (!reason) {
+            setErrorModal({ isOpen: true, message: 'Lütfen bir şikayet nedeni seçin.' });
             return;
         }
 
@@ -57,100 +60,95 @@ const IlanSikayet = ({ isOpen, onClose, listingId, listingTitle }) => {
 
         } catch (error) {
             console.error("Şikayet gönderme hatası:", error);
-            alert("Bir hata oluştu. Lütfen tekrar deneyin.");
+            setErrorModal({ isOpen: true, message: 'Bir hata oluştu. Lütfen tekrar deneyin.' });
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    const handleClose = () => {
+        setReason('');
+        setDescription('');
+        setIsSuccess(false);
+        onClose();
+    };
+
+    // Success Modal
+    if (isSuccess) {
+        return (
+            <Modal
+                isOpen={isOpen}
+                onClose={handleClose}
+                title="Teşekkürler"
+                type="success"
+                customIcon={<CheckCircle2 size={32} className="text-green-500" />}
+                confirmText="Tamam"
+                onConfirm={handleClose}
+            >
+                <p className="text-gray-500 leading-relaxed">
+                    Bildiriminiz başarıyla alındı. Ekibimiz en kısa sürede inceleyecektir.
+                </p>
+            </Modal>
+        );
+    }
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100 p-6 relative">
+        <>
+            <Modal
+                isOpen={isOpen}
+                onClose={handleClose}
+                title="İlanı Şikayet Et"
+                type="error"
+                customIcon={<AlertTriangle size={32} className="text-red-500" />}
+                size="md"
+                showCancel={true}
+                cancelText="İptal"
+                confirmText={isSubmitting ? 'Gönderiliyor...' : 'Şikayet Et'}
+                confirmDisabled={!reason}
+                confirmLoading={isSubmitting}
+                onConfirm={handleSubmit}
+            >
+                <p className="text-gray-500 text-sm mb-4 line-clamp-1">{listingTitle}</p>
 
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition p-1 hover:bg-gray-100 rounded-full"
-                >
-                    <X size={20} />
-                </button>
-
-                {!isSuccess ? (
-                    <>
-                        <div className="text-center mb-6">
-                            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <AlertTriangle size={24} />
-                            </div>
-                            <h2 className="text-xl font-bold text-gray-900">İlanı Şikayet Et</h2>
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-1">{listingTitle}</p>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Şikayet Nedeni</label>
-                                <select
-                                    value={reason}
-                                    onChange={(e) => setReason(e.target.value)}
-                                    required
-                                    className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50 appearance-none"
-                                >
-                                    <option value="">Bir neden seçin</option>
-                                    {reasons.map((r, idx) => (
-                                        <option key={idx} value={r}>{r}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Açıklama (İsteğe bağlı)</label>
-                                <textarea
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    rows={4}
-                                    placeholder="Lütfen detayları belirtin (örn: Ürün fotoğrafları farklı...)"
-                                    className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50 resize-none"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition"
-                                >
-                                    İptal
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={!reason || isSubmitting}
-                                    className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition shadow-lg shadow-red-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                >
-                                    {isSubmitting ? (
-                                        <>
-                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            Gönderiliyor
-                                        </>
-                                    ) : (
-                                        'Şikayet Et'
-                                    )}
-                                </button>
-                            </div>
-                        </form>
-                    </>
-                ) : (
-                    <div className="text-center py-8">
-                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-in zoom-in duration-300">
-                            <CheckCircle2 size={32} />
-                        </div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Teşekkürler</h3>
-                        <p className="text-gray-500">
-                            Bildiriminiz başarıyla alındı. Ekibimiz en kısa sürede inceleyecektir.
-                        </p>
+                <div className="text-left space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Şikayet Nedeni</label>
+                        <select
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                            className="w-full p-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50 appearance-none transition"
+                        >
+                            <option value="">Bir neden seçin</option>
+                            {reasons.map((r, idx) => (
+                                <option key={idx} value={r}>{r}</option>
+                            ))}
+                        </select>
                     </div>
-                )}
-            </div>
-        </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Açıklama (İsteğe bağlı)</label>
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={3}
+                            placeholder="Lütfen detayları belirtin..."
+                            className="w-full p-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50 resize-none transition"
+                        />
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Error Modal */}
+            <Modal
+                isOpen={errorModal.isOpen}
+                onClose={() => setErrorModal({ isOpen: false, message: '' })}
+                title="Hata"
+                message={errorModal.message}
+                type="error"
+            />
+        </>
     );
 };
 
 export default IlanSikayet;
+

@@ -245,7 +245,7 @@ const Users = () => {
             }
         }
 
-        // Skip verification if demoting to 'user' (no notification needed)
+        // Demoting to 'user' - send notification and update role
         if (newRole === 'user') {
             showModal({
                 title: 'Rol Değiştir',
@@ -262,6 +262,19 @@ const Users = () => {
                             .eq('id', userId);
 
                         if (error) throw error;
+
+                        // Send notification to the user about role change to 'user'
+                        const previousRole = targetUser?.role === 'admin' ? 'Admin' : 'Moderatör';
+                        await supabase
+                            .from('notifications')
+                            .insert({
+                                user_id: userId,
+                                type: 'role_changed',
+                                title: 'Rol Değişikliği',
+                                message: `Hesabınızın ${previousRole} yetkisi kaldırıldı ve rolünüz "Kullanıcı" olarak değiştirildi.`,
+                                link: null,
+                                is_read: false
+                            });
 
                         setUsers(users.map(u =>
                             u.id === userId ? { ...u, role: newRole } : u
@@ -615,139 +628,91 @@ const Users = () => {
             </div>
 
             {/* Ban Modal */}
-            {banModal.open && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold text-gray-900">Kullanıcıyı Banla</h3>
-                            <button
-                                onClick={() => {
-                                    setBanModal({ open: false, user: null });
-                                    setBanReason('');
-                                }}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+            <Modal
+                isOpen={banModal.open}
+                onClose={() => {
+                    setBanModal({ open: false, user: null });
+                    setBanReason('');
+                }}
+                title="Kullanıcıyı Banla"
+                type="warning"
+                customIcon={<Ban size={32} className="text-orange-500" />}
+                size="md"
+                showCancel={true}
+                cancelText="İptal"
+                confirmText="Banla"
+                onConfirm={handleBanUser}
+            >
+                <p className="text-gray-500 leading-relaxed mb-6">
+                    <span className="font-semibold text-gray-700">{banModal.user?.username || banModal.user?.full_name}</span> kullanıcısını banlamak istediğinizden emin misiniz?
+                </p>
 
-                        <p className="text-gray-600 mb-4">
-                            <span className="font-semibold">{banModal.user?.username || banModal.user?.full_name}</span> kullanıcısını banlamak istediğinizden emin misiniz?
-                        </p>
-
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Ban Nedeni (isteğe bağlı)
-                            </label>
-                            <textarea
-                                value={banReason}
-                                onChange={(e) => setBanReason(e.target.value)}
-                                placeholder="Ban nedenini buraya yazabilirsiniz..."
-                                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
-                                rows="4"
-                            />
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setBanModal({ open: false, user: null });
-                                    setBanReason('');
-                                }}
-                                className="flex-1 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
-                            >
-                                İptal
-                            </button>
-                            <button
-                                onClick={handleBanUser}
-                                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition"
-                            >
-                                Banla
-                            </button>
-                        </div>
-                    </div>
+                <div className="text-left">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Ban Nedeni (isteğe bağlı)
+                    </label>
+                    <textarea
+                        value={banReason}
+                        onChange={(e) => setBanReason(e.target.value)}
+                        placeholder="Ban nedenini buraya yazabilirsiniz..."
+                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none transition"
+                        rows="3"
+                    />
                 </div>
-            )}
+            </Modal>
 
             {/* Role Verification Modal */}
-            {roleVerifyModal.open && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold text-gray-900">Doğrulama Kodu</h3>
-                            <button
-                                onClick={() => {
-                                    setRoleVerifyModal({
-                                        open: false,
-                                        user: null,
-                                        newRole: null,
-                                        verificationCode: '',
-                                        enteredCode: '',
-                                        loading: false
-                                    });
-                                }}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                            <p className="text-blue-800 text-sm">
-                                <span className="font-semibold">{roleVerifyModal.user?.username || roleVerifyModal.user?.full_name}</span> kullanıcısına
-                                <span className="font-semibold"> {roleVerifyModal.newRole === 'admin' ? 'Admin' : 'Moderatör'}</span> yetkisi vermek için
-                                doğrulama kodu gönderildi.
-                            </p>
-                            <p className="text-blue-700 text-sm mt-2">
-                                Kullanıcıdan bildirimlerindeki 6 haneli kodu alın ve aşağıya girin.
-                            </p>
-                        </div>
-
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                6 Haneli Doğrulama Kodu
-                            </label>
-                            <input
-                                type="text"
-                                value={roleVerifyModal.enteredCode}
-                                onChange={(e) => {
-                                    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                                    setRoleVerifyModal(prev => ({ ...prev, enteredCode: value }));
-                                }}
-                                placeholder="______"
-                                maxLength={6}
-                                className="w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setRoleVerifyModal({
-                                        open: false,
-                                        user: null,
-                                        newRole: null,
-                                        verificationCode: '',
-                                        enteredCode: '',
-                                        loading: false
-                                    });
-                                }}
-                                className="flex-1 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition"
-                                disabled={roleVerifyModal.loading}
-                            >
-                                İptal
-                            </button>
-                            <button
-                                onClick={handleVerifyRoleChange}
-                                disabled={roleVerifyModal.enteredCode.length !== 6 || roleVerifyModal.loading}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {roleVerifyModal.loading ? 'Doğrulanıyor...' : 'Doğrula'}
-                            </button>
-                        </div>
-                    </div>
+            <Modal
+                isOpen={roleVerifyModal.open}
+                onClose={() => {
+                    setRoleVerifyModal({
+                        open: false,
+                        user: null,
+                        newRole: null,
+                        verificationCode: '',
+                        enteredCode: '',
+                        loading: false
+                    });
+                }}
+                title="Doğrulama Kodu"
+                type="info"
+                customIcon={<UserCog size={32} className="text-blue-500" />}
+                size="md"
+                showCancel={true}
+                cancelText="İptal"
+                confirmText={roleVerifyModal.loading ? 'Doğrulanıyor...' : 'Doğrula'}
+                confirmDisabled={roleVerifyModal.enteredCode.length !== 6}
+                confirmLoading={roleVerifyModal.loading}
+                onConfirm={handleVerifyRoleChange}
+            >
+                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-left mb-4">
+                    <p className="text-blue-800 text-sm">
+                        <span className="font-semibold">{roleVerifyModal.user?.username || roleVerifyModal.user?.full_name}</span> kullanıcısına
+                        <span className="font-semibold"> {roleVerifyModal.newRole === 'admin' ? 'Admin' : 'Moderatör'}</span> yetkisi vermek için
+                        doğrulama kodu gönderildi.
+                    </p>
+                    <p className="text-blue-700 text-sm mt-2">
+                        Kullanıcıdan bildirimlerindeki 6 haneli kodu alın ve aşağıya girin.
+                    </p>
                 </div>
-            )}
+
+                <div className="text-left">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        6 Haneli Doğrulama Kodu
+                    </label>
+                    <input
+                        type="text"
+                        value={roleVerifyModal.enteredCode}
+                        onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                            setRoleVerifyModal(prev => ({ ...prev, enteredCode: value }));
+                        }}
+                        placeholder="______"
+                        maxLength={6}
+                        className="w-full px-4 py-4 text-center text-2xl font-mono tracking-widest border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                    />
+                </div>
+            </Modal>
 
             {/* General Modal */}
             <Modal

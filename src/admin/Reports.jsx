@@ -1,11 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { AlertTriangle, CheckCircle, XCircle, Search, Eye, ExternalLink } from 'lucide-react';
+import Modal from '../components/Modal';
 
 const Reports = () => {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('pending'); // pending, all, resolved
+    const [modalConfig, setModalConfig] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info',
+        confirmText: 'Tamam',
+        cancelText: 'İptal',
+        showCancel: false,
+        onConfirm: null
+    });
+
+    const showModal = ({ title, message, type = 'info', confirmText = 'Tamam', cancelText = 'İptal', showCancel = false, onConfirm = null }) => {
+        setModalConfig({
+            isOpen: true,
+            title,
+            message,
+            type,
+            confirmText,
+            cancelText,
+            showCancel,
+            onConfirm
+        });
+    };
+
+    const closeModal = () => {
+        setModalConfig(prev => ({ ...prev, isOpen: false }));
+    };
 
     useEffect(() => {
         fetchReports();
@@ -71,7 +99,11 @@ const Reports = () => {
 
         } catch (error) {
             console.error("Error updating status:", error);
-            alert("Durum güncellenemedi.");
+            showModal({
+                title: 'Hata',
+                message: 'Durum güncellenemedi.',
+                type: 'error'
+            });
         }
     };
 
@@ -198,6 +230,19 @@ const Reports = () => {
                     </table>
                 </div>
             </div>
+
+            {/* General Modal */}
+            <Modal
+                isOpen={modalConfig.isOpen}
+                onClose={closeModal}
+                title={modalConfig.title}
+                message={modalConfig.message}
+                type={modalConfig.type}
+                confirmText={modalConfig.confirmText}
+                cancelText={modalConfig.cancelText}
+                showCancel={modalConfig.showCancel}
+                onConfirm={modalConfig.onConfirm}
+            />
         </div>
     );
 };

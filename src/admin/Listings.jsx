@@ -460,44 +460,32 @@ const Listings = () => {
             />
 
             {/* Reject Reason Modal */}
-            {rejectModal.isOpen && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-xl font-bold text-gray-900">İlanı Reddet</h3>
-                            <button onClick={closeRejectModal} className="text-gray-400 hover:text-gray-600">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-4">
-                            Bu ilanı reddetmek üzeresiniz. Lütfen kullanıcı için bir sebep belirtin. Bu sebep kullanıcıya bildirim olarak gönderilecektir.
-                        </p>
-                        <textarea
-                            value={rejectModal.reason}
-                            onChange={(e) => setRejectModal(prev => ({ ...prev, reason: e.target.value }))}
-                            placeholder="Örn: Görseller yetersiz, açıklama hatalı..."
-                            className="w-full h-32 p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 mb-6 resize-none"
-                            autoFocus
-                        />
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={closeRejectModal}
-                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition"
-                            >
-                                İptal
-                            </button>
-                            <button
-                                onClick={handleRejectConfirm}
-                                disabled={!rejectModal.reason.trim()}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            >
-                                <X size={16} />
-                                Reddet ve Bildir
-                            </button>
-                        </div>
-                    </div>
+            <Modal
+                isOpen={rejectModal.isOpen}
+                onClose={closeRejectModal}
+                title="İlanı Reddet"
+                type="error"
+                customIcon={<X size={32} className="text-red-500" />}
+                size="md"
+                showCancel={true}
+                cancelText="İptal"
+                confirmText="Reddet ve Bildir"
+                confirmDisabled={!rejectModal.reason.trim()}
+                onConfirm={handleRejectConfirm}
+            >
+                <p className="text-gray-500 leading-relaxed mb-4 text-left">
+                    Bu ilanı reddetmek üzeresiniz. Lütfen kullanıcı için bir sebep belirtin. Bu sebep kullanıcıya bildirim olarak gönderilecektir.
+                </p>
+                <div className="text-left">
+                    <textarea
+                        value={rejectModal.reason}
+                        onChange={(e) => setRejectModal(prev => ({ ...prev, reason: e.target.value }))}
+                        placeholder="Örn: Görseller yetersiz, açıklama hatalı..."
+                        className="w-full h-32 p-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none transition"
+                        autoFocus
+                    />
                 </div>
-            )}
+            </Modal>
         </div>
     );
 };
